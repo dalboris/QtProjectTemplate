@@ -1,5 +1,5 @@
 
-include($$OUT_PWD/Build.pri)
+include($$OUT_PWD/__gen__.pri)
 
 TEMPLATE = app
 TARGET = App2

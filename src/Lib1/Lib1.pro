@@ -1,5 +1,5 @@
 
-include($$OUT_PWD/Build.pri)
+include($$OUT_PWD/__gen__.pri)
 
 INCLUDEPATH += $$PWD/..
 unix: QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_ISYSTEM $$PWD/..

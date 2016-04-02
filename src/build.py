@@ -18,6 +18,13 @@ def mkdir_p(path):
 	else:
 	    raise
 
+common = """
+
+CONFIG(release, debug|release): RELEASE_OR_DEBUG = release
+CONFIG(debug,   debug|release): RELEASE_OR_DEBUG = debug
+
+"""
+
 # For each *.pro file in srcDir
 for x in os.walk(srcDir):
     dirname = x[0]
@@ -39,8 +46,9 @@ for x in os.walk(srcDir):
 
 	    # 3. Create Build.pri file
 	    mkdir_p(proOutDir)
-	    f = open(proOutDir + '/Build.pri', 'w')
+	    f = open(proOutDir + '/__gen__.pri', 'w')
 	    f.write("# THIS FILE WAS AUTOMATICALLY GENERATED.\n" +
 		    "# IT IS LOCATED IN THE BUILD DIRECTORY.\n" +
 		    "# ANY EDIT WILL BE LOST.\n\n")
+	    f.write(common)
 	    f.close()
