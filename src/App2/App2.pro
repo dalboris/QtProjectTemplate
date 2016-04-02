@@ -1,5 +1,4 @@
 
-# Auto-generated build configuration
 include($$OUT_PWD/Build.pri)
 
 TEMPLATE = app

@@ -4,9 +4,19 @@
 import sys
 import os
 import shutil
+import errno
 
 srcDir = sys.argv[1]
 outDir = sys.argv[2]
+
+def mkdir_p(path):
+    try:
+	os.makedirs(path)
+    except OSError as exc:  # Python >2.5
+	if exc.errno == errno.EEXIST and os.path.isdir(path):
+	    pass
+	else:
+	    raise
 
 # For each *.pro file in srcDir
 for x in os.walk(srcDir):
@@ -28,9 +38,9 @@ for x in os.walk(srcDir):
 		proOutDir = outDir + '/' + relativeDirname
 
 	    # 3. Create Build.pri file
+	    mkdir_p(proOutDir)
 	    f = open(proOutDir + '/Build.pri', 'w')
 	    f.write("# THIS FILE WAS AUTOMATICALLY GENERATED.\n" +
 		    "# IT IS LOCATED IN THE BUILD DIRECTORY.\n" +
 		    "# ANY EDIT WILL BE LOST.\n\n")
-	    f.write("message(Hello from " + filename + ")\n")
 	    f.close()
