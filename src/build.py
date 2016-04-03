@@ -23,6 +23,8 @@ common = """
 CONFIG(release, debug|release): RELEASE_OR_DEBUG = release
 CONFIG(debug,   debug|release): RELEASE_OR_DEBUG = debug
 
+CONFIG += c++11
+
 """
 
 # For each *.pro file in srcDir
@@ -46,7 +48,7 @@ for x in os.walk(srcDir):
 
 	    # 3. Create Build.pri file
 	    mkdir_p(proOutDir)
-	    f = open(proOutDir + '/__gen__.pri', 'w')
+	    f = open(proOutDir + '/_.pri', 'w')
 	    f.write("# THIS FILE WAS AUTOMATICALLY GENERATED.\n" +
 		    "# IT IS LOCATED IN THE BUILD DIRECTORY.\n" +
 		    "# ANY EDIT WILL BE LOST.\n\n")
