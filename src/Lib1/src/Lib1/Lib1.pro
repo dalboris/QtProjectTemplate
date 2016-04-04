@@ -1,17 +1,7 @@
 
-###############################################################################
-#                        XXX TODO: THINGS TO AUTOMATE
-#
-
-INCLUDEPATH += $$PWD/..
-unix: QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_ISYSTEM $$PWD/..
-
-#
-#
-###############################################################################
+include($$OUT_PWD/_.pri)
 
 TEMPLATE = lib
-CONFIG += staticlib
 QT -= core gui
 
 HEADERS += \
