@@ -6,11 +6,17 @@
 // license terms and conditions in the LICENSE.MIT file found in the top-level
 // directory of this distribution and at http://opensource.org/licenses/MIT
 
-#include <Lib1/Foo.h>
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
 
-#include <iostream>
+#include <QMainWindow>
 
-Foo::Foo()
+class MainWindow: public QMainWindow
 {
-    std::cout << "Foo::Foo()" << std::endl;
-}
+public:
+    MainWindow();
+
+void foo() {}
+};
+
+#endif // MAINWINDOW_H

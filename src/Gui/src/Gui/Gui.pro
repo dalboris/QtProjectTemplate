@@ -1,13 +1,12 @@
 
-include($$OUT_PWD/_.pri)
-
-TEMPLATE = app
-CONFIG += qt
+TEMPLATE = lib
 QT += widgets
+#QT -= core gui
 
 HEADERS += \
     MainWindow.h
 
 SOURCES += \
-    main.cpp \
     MainWindow.cpp
+
+include($$OUT_PWD/AutoBuild.pri)

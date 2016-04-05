@@ -6,13 +6,11 @@
 // license terms and conditions in the LICENSE.MIT file found in the top-level
 // directory of this distribution and at http://opensource.org/licenses/MIT
 
-#ifndef FOO_H
-#define FOO_H
+#include "MainWindow.h"
 
-class Foo
+#include <iostream>
+
+MainWindow::MainWindow()
 {
-public:
-    Foo();
-};
-
-#endif // FOO_H
+    std::cout << "MainWindow::MainWindow()" << std::endl;
+}
