@@ -167,6 +167,9 @@ class Project:
         self.name = ""      # Project
         self.filename = ""  # Project.pro
 
+        self.relDir = ""    # Path/To/Project
+        self.relPath = ""   # Path/To/Project/Project.pro
+
         self.srcDir = ""    # /home/user/QtProjectTemplate/src/Path/To/Project
         self.srcPath = ""   # /home/user/QtProjectTemplate/src/Path/To/Project/Project.pro
 
@@ -176,8 +179,17 @@ class Project:
         self.template = ""  # subdir | lib | app
         self.depends  = []  # [ "Lib1", "Lib2" ]
 
-# List storing all projects in the distribution
-projects = []
+        self.parentProject = None
+        self.subProjects = []
+
+# Dictionary storing all projects in the distribution, accessed by their relDir
+# Example of keys:
+#     - "" (root project)
+#     - "Gui"
+#     - "Gui/src/Gui"
+#     - "Gui/tests/GuiTests"
+#     - "App"
+projects = {}
 
 # Dictionary to get a lib project from its name
 libs = {}
@@ -195,25 +207,36 @@ for x in os.walk(srcDir):
 
             # Create project object
             project = Project()
-            project.filename = filename
-            project.name = filename[:-4]
+            project.filename = filename   # "Project.pro"
+            project.name = filename[:-4]  # "Project"
 
-            # Get relevant directories associated with this project
-            relativeDirname = dirname[len(srcDir)+1:]
-            if relativeDirname == "":
-                project.srcDir = srcDir
-                project.outDir = outDir
+            # Get path of directory relative to the root of the distribution
+            # This path is used as key to identified the project.
+            project.relDir = dirname[len(srcDir)+1:]  # "Path/to/Project"
+
+            # Get relPath, srcDir, and outDir (special case of root project)
+            if project.relDir == "":
+                project.relPath = project.filename  # "RootProject.pro"
+                project.srcDir  = srcDir            # "/home/user/QtProjectTemplate/src"
+                project.outDir  = outDir            # "/home/user/QtProjectTemplate/build-Qt_5_5_GCC_64bit-Debug"
+
+            # Get relPath, srcDir, and outDir (normal case of non-root project)
             else:
-                project.srcDir = srcDir + '/' + relativeDirname
-                project.outDir = outDir + '/' + relativeDirname
-            project.srcPath = project.srcDir + '/' + project.filename
-            project.outPath = project.outDir + '/AutoBuild.pri'
+                project.relPath = project.relDir + '/' + project.filename  # "Path/to/Project/Project.pro"
+                project.srcDir = srcDir + '/' + project.relDir             # "/home/user/QtProjectTemplate/src/Path/to/Project"
+                project.outDir = outDir + '/' + project.relDir             # "/home/user/QtProjectTemplate/build-Qt_5_5_GCC_64bit-Debug/Path/to/Project"
 
-            # Insert in list of projects
-            projects.append(project)
+            # Get srcPath and outPath
+            project.srcPath = project.srcDir + '/' + project.filename  # "/home/user/QtProjectTemplate/src/Path/to/Project/Project.pro"
+            project.outPath = project.outDir + '/AutoBuild.pri'        # "/home/user/QtProjectTemplate/build-Qt_5_5_GCC_64bit-Debug/Path/to/Project/AutoBuild.pro"
+
+            # Insert in dictionary storing all projects, using relDir as the key
+            projects[project.relDir] = project
 
 # Parse projects
-for project in projects:
+for relDir in projects:
+    # Get project
+    project = projects[relDir]
 
     # Get project file as string
     data = read(project.srcPath)
@@ -230,7 +253,9 @@ for project in projects:
 
 
 # Generate all AutoBuild.pri files
-for project in projects:
+for relDir in projects:
+    # Get project
+    project = projects[relDir]
 
     # Create directory containing this project's AutoBuild.pri
     mkdir_p(project.outDir)
