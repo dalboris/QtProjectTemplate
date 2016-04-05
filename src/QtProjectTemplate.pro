@@ -16,7 +16,3 @@ SUBDIRS = \
 
 # Include AutoBuild.pri.
 include($$OUT_PWD/AutoBuild.pri)
-
-# XXX TODO: THINGS TO AUTOMATE
-App.depends = Gui
-

@@ -83,7 +83,19 @@ def getDepends(string):
         depends = match.groups()[0]
 
         # clean list, e.g. ["Lib1", "Lib2"]
-        return re.findall(r"[\w']+", depends)
+        return re.findall(r"[/\w']+", depends)
+    else:
+        return []
+
+# Gets SUBDIRS value
+def getSubdirs(string):
+    match = re.search(r"SUBDIRS\s*=([^\n\\]*(\\[^\S\n]*\n[^\n\\]*)*)", string)
+    if match:
+        # raw parsed value, e.g.: " \\\n    src/Gui \\\n    tests/GuiTests"
+        subdirs = match.groups()[0]
+
+        # clean list, e.g. ["src/Gui", "tests/GuiTests"]
+        return re.findall(r"[/\w']+", subdirs)
     else:
         return []
 
@@ -178,9 +190,22 @@ class Project:
 
         self.template = ""  # subdir | lib | app
         self.depends  = []  # [ "Lib1", "Lib2" ]
+        self.subdirs  = []  # [ "Core", "Gui", "App" ], [ "src/Gui", "tests/GuiTests" ], etc.
 
         self.parentProject = None
         self.subProjects = []
+
+        self.subdir    = ""             # To/Project ( = dir of this project relative to parent project)
+        self.subdirKey = ""             # To_Project ( = key to identify this subdir)
+        self.subdirDependsKeys = set()  # Keys of subdirs that this subdir depends on. Examples:
+                                        #    subdirKey              subdirDependsKeys
+                                        #     "Core"           ->    {}
+                                        #     "Gui"            ->    {"Core"}
+                                        #     "App"            ->    {"Core", "Gui"}
+                                        #     "src_Gui"        ->    {}
+                                        #     "tests_GuiTests" ->    {"src_Gui"}
+                                        #
+                                        # These keys are always keys of sibling subdirs
 
 # Dictionary storing all projects in the distribution, accessed by their relDir
 # Example of keys:
@@ -233,6 +258,7 @@ for x in os.walk(srcDir):
             # Insert in dictionary storing all projects, using relDir as the key
             projects[project.relDir] = project
 
+
 # Parse projects
 for relDir in projects:
     # Get project
@@ -247,9 +273,83 @@ for relDir in projects:
     # Parse DEPENDS value
     project.depends = getDepends(data)
 
+    # Parse SUBDIRS value
+    project.subdirs = getSubdirs(data)
+
     # If project is a lib, add it to libs
     if project.template == "lib":
         libs[project.name] = project
+
+
+# Set parent/child relationships
+for relDir in projects:
+    # Get project
+    project = projects[relDir]
+
+    # For all subdir in subdirs
+    for subdir in project.subdirs:
+        # Get relDir of subproject
+        if project.relDir == "":
+            subProjectRelDir = subdir                         # "App"
+        else:
+            subProjectRelDir = project.relDir + '/' + subdir  # "Gui" + '/' + "src/Gui"
+
+        # Check if subProject exists
+        if subProjectRelDir in projects:
+            # Get subproject
+            subProject = projects[subProjectRelDir]
+
+            # Set parent/child relationships
+            project.subProjects.append(subProject)
+            subProject.parentProject = project
+            subProject.subdir = subdir
+            subProject.subdirKey = subdir.replace('/', '__')
+
+        else:
+            print ("Error: subproject", subprojectRelDir, "of project", project.relDir, "not found.")
+
+# Helper method:
+#
+# Returns a list of all ancestors of a project. The first element of the
+# returned list is the root project of the distribution, and the last element
+# is the given project.
+#
+def getAncestors(project):
+    ancestors = [project]
+    while ancestors[0].parentProject != None:
+        ancestors.insert(0, ancestors[0].parentProject)
+    return ancestors
+
+# Resolve subdirs dependencies based on lib/app dependencies
+for relDir in projects:
+    # Get project
+    project = projects[relDir]
+
+    # For all lib/app dependency
+    for lib in project.depends:
+        if lib in libs:
+            # Get project of lib this project depends on
+            libProject = libs[lib]
+
+            # Get all ancestors of this project and of libProject
+            projectAncestors = getAncestors(project)
+            libProjectAncestors = getAncestors(libProject)
+
+            # Find common ancestor
+            indexCommonAncestor = 0
+            while projectAncestors[indexCommonAncestor+1] == libProjectAncestors[indexCommonAncestor+1]:
+                indexCommonAncestor += 1
+
+            # Add subdir dependency
+            dependentProject = projectAncestors[indexCommonAncestor+1]
+            dependeeProject  = libProjectAncestors[indexCommonAncestor+1]
+            dependentProject.subdirDependsKeys.add(dependeeProject.subdirKey)
+
+        else:
+            print ("Error: dependent library", lib, "not found. Note: you can only " +
+                   "depends on 'TEMPLATE = lib' subprojects, maybe you tried to depend on " +
+                   "a 'TEMPLATE = app' subproject?")
+
 
 
 # Generate all AutoBuild.pri files
@@ -277,6 +377,28 @@ for relDir in projects:
 
         # Add self to INCLUDEPATH
         f.write(addSelfToIncludePathText)
+
+    # If project is a subdir
+    if project.template == "subdirs":
+        # Override value of SUBDIRS by using keys instead of folder path
+        subdirsText = ("\n" +
+                       "# Override value of SUBDIRS by using keys instead of folder path\n" +
+                       "SUBDIRS =")
+        for subProject in project.subProjects:
+            subdirsText += " \\\n    " + subProject.subdirKey
+        subdirsText += "\n"
+        f.write(subdirsText)
+
+        # Set subdirs and dependencies
+        for subProject in project.subProjects:
+            subdirText = ("\n" +
+                          "# Set " + subProject.subdirKey + " location and dependencies\n")
+            subdirText += subProject.subdirKey + ".subdir  = " + subProject.subdir + "\n"
+            subdirText += subProject.subdirKey + ".depends ="
+            for key in subProject.subdirDependsKeys:
+                subdirText += " " + key
+            subdirText += "\n"
+            f.write(subdirText)
 
     # Add text required whenever there is at least one lib dependency
     if len(project.depends) > 0:
