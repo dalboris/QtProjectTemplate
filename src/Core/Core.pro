@@ -1,7 +1,10 @@
+TEMPLATE = lib
+QT -= core gui
 
-TEMPLATE = subdirs
-SUBDIRS = \
-    src/Core \
-    tests/CoreTests
+HEADERS += \
+    Foo.h
 
-include($$OUT_PWD/AutoBuild.pri)
+SOURCES += \
+    Foo.cpp
+
+include($$OUT_PWD/.config.pri)

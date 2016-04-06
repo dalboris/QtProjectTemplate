@@ -1,4 +1,3 @@
-
 TEMPLATE = app
 CONFIG += qt
 QT += widgets
@@ -8,4 +7,4 @@ DEPENDS = \
 
 SOURCES += main.cpp
 
-include($$OUT_PWD/AutoBuild.pri)
+include($$OUT_PWD/.config.pri)

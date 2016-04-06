@@ -1,8 +1,10 @@
 
-#-----------------------------------------------------------------------------#
-#          IMPORTANT: If you edit this file, then you must manually           #
-#                     call qmake for changes to take effect                   #
-#-----------------------------------------------------------------------------#
+# This script requires Python >= 2.6. I has been tested with Python 2.7.6 on
+# Ubuntu and Windows. It has not yet been tested with Python 3, or on MacOS,
+# but might just work.
+
+# NOTE: If you edit this file, then you must manually call
+#       qmake for changes to take effect
 
 # Documentation
 # -------------
@@ -13,23 +15,21 @@
 #
 # This script automatically generates an additional project file:
 #
-#     <build-directory>/Path/To/Project/AutoBuild.pri
+#     <build-directory>/Path/To/Project/.config.pri
 #
 # Which is included by Project.pro.
 #
-# The automatically generated AutoBuild.pri file contains all the boilerplate
+# The automatically generated .config.pri files contain all the boilerplate
 # that should normally be manually written in Project.pro, but that can be
 # automated, such as:
 #
-#     1. Specify C++11 compiler flags.
+#     1. Specify common configuration options (e.g., C++11 compiler flag)
 #
-#     2. Sets INCLUDEPATH and LIBS variables for all platforms, based on
-#        the DEPENDS variable
+#     2. Set INCLUDEPATH, DEPENDPATH, PRE_TARGETDEPS, and LIBS variables for
+#        all platforms, based on the DEPENDS variable of the current project.
 #
 #     3. Set the SUBDIRS dependencies based on the DEPENDS variable of
 #        subprojects
-#
-# This avoids code duplication and increases readability/maintainability.
 #
 
 #--------------------------- Required modules ---------------------------------
@@ -75,29 +75,64 @@ def getTemplate(string):
     if match:
         return match.groups()[0]
 
-# Returns the DEPENDS value parsed from the given string.
-def getDepends(string):
-    match = re.search(r"DEPENDS\s*=([^\n\\]*(\\[^\S\n]*\n[^\n\\]*)*)", string)
+# Returns as a list the values of the given qmake variable 'variableName',
+# defined in the given inputConfig. Returns an empty list if the variable
+# is not found.
+#
+# Example input:
+#
+# """
+# VARIABLE_I_DONT_CARE = \
+#     whatever1 \
+#     whatever2 \
+#     whatever3
+#
+# VARIABLE_NAME = \
+#     value1 \
+#     value2 \
+#     value3
+# """
+#
+# Example output:
+#
+# [ 'value1', 'value2', 'value3' ]
+#
+# It supports ugly formatting, if you're that kind of person:
+#
+# VARIABLE_NAME=value1   value2 \
+#     value3 \
+#   value4 value5
+#
+# It also supports '/' within values, to specify folders, such as:
+#
+# SUBDIRS = \
+#     Core/Memory \
+#     Core/Log \
+#     Gui \
+#     App
+#
+# However, it does not support the '+=' syntax.
+#
+def getVariableValuesAsList(variableName, inputConfig):
+    regexPattern = variableName + r"\s*=([^\n\\]*(\\[^\S\n]*\n[^\n\\]*)*)"
+    match = re.search(regexPattern, inputConfig)
     if match:
-        # raw parsed value, e.g.: " \\\n    Lib1 \\\n    Lib2"
+        # Matched string (something like " \\\n    value1 \\\n    value2")
         depends = match.groups()[0]
 
-        # clean list, e.g. ["Lib1", "Lib2"]
+        # Convert to beautiful list (something like ["value1", "value2"])
         return re.findall(r"[/\w']+", depends)
     else:
+        # Return an empty list if not found
         return []
+
+# Returns the DEPENDS value parsed from the given string.
+def getDepends(inputConfig):
+    return getVariableValuesAsList('DEPENDS', inputConfig)
 
 # Returns the SUBDIRS value parsed from the given string.
-def getSubdirs(string):
-    match = re.search(r"SUBDIRS\s*=([^\n\\]*(\\[^\S\n]*\n[^\n\\]*)*)", string)
-    if match:
-        # raw parsed value, e.g.: " \\\n    src/Gui \\\n    tests/GuiTests"
-        subdirs = match.groups()[0]
-
-        # clean list, e.g. ["src/Gui", "tests/GuiTests"]
-        return re.findall(r"[/\w']+", subdirs)
-    else:
-        return []
+def getSubdirs(inputConfig):
+    return getVariableValuesAsList('SUBDIRS', inputConfig)
 
 # Returns the project corresponding to the given libname.
 def getLibProject(libname):
@@ -126,11 +161,11 @@ prlText = """
 # Tell qmake to create a .prl file for this library, and to use it when linking
 # against this library. This allows any application that links against this
 # library to also link against all libraries that this library depends on.
-# This is normally not necessary since AutoBuild.py also compute recursively
+# I think this is useless since configure.py already computes recursively
 # the dependencies and pass them all to the linker in the proper order, but
-# it doesn't hurt to keep these as well.
-CONFIG += create_prl
-CONFIG += link_prl
+# to be honest, I don't understand 100% what these .prl files do and it doesn't
+# hurt to keep them.
+CONFIG += create_prl link_prl
 """
 
 staticLibText = """
@@ -138,14 +173,20 @@ staticLibText = """
 CONFIG += staticlib
 """
 
-addSelfToIncludePathText = """
-# Add this lib project to its own INCLUDEPATH
-INCLUDEPATH += $$_PRO_FILE_PWD_/../
-unix: QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_ISYSTEM $$_PRO_FILE_PWD_/../
+includeText = """
+# Add src/ to INCLUDEPATH.
+# This fixes "cannot find MyLib/MyHeader.h" compile errors.
+INCLUDEPATH += %1/
+unix: QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_ISYSTEM %1/
+
+# Add src/ to DEPENDPATH.
+# This causes to re-compile dependent .cpp files in this project, whenever
+# dependee .h files in src/ are modified. In Qt5, this is redundant with adding
+# src/ to INCLUDEPATH, but we keep it for documentation and compatibility with
+# Qt4.
+DEPENDPATH += %1/
 """
-
-
-#------------- text to add a lib this project depends on ----------------------
+includeText = includeText.replace('%1', srcDir)
 
 releaseOrDebugText = """
 # Convenient variable whose value is "release" when building
@@ -154,36 +195,23 @@ CONFIG(release, debug|release): RELEASE_OR_DEBUG = release
 CONFIG(debug,   debug|release): RELEASE_OR_DEBUG = debug
 """
 
-# %1: must be replaced by the dependent lib project's name
-# %2: must be replaced by the dependent lib project's srcDir
-# %3: must be replaced by the dependent lib project's outDir
+
+#------------- text to add a lib this project depends on ----------------------
+
+# Usage:
+#     %1: must be replaced by the dependent lib project's name
+#     %2: must be replaced by the dependent lib project's srcDir
+#     %3: must be replaced by the dependent lib project's outDir
 
 addLibText = """
-# Add %1 to INCLUDEPATH.
-# This fixes "cannot find %1/Foo.h" compile errors.
-INCLUDEPATH += %2/../
-unix: QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_ISYSTEM %2/../
-
 # Add %1 to LIBS.
-# This fixes "undefined reference to `%1::Foo::Foo()'" linking errors.
+# This fixes "undefined reference to `%1::MyFunction()'" linking errors.
 unix:  LIBS += -L%3/ -l%1
 win32: LIBS += -L%3/$$RELEASE_OR_DEBUG/ -l%1
 
-# Add %1 to DEPENDPATH.
-# This adds all headers in %1 to the list of headers that qmake parses to
-# generate dependencies. In other words, this causes to recompile relevant
-# files from this project whenever dependent headers from %1 change.
-# This is in fact useless now: since Qt5, folders added to INCLUDEPATH
-# are now automatically considered by qmake to generate dependencies. However,
-# we keep it here since it doesn't hurt, and might help if someone wants
-# to use the AutoBuild.py script with Qt4.
-DEPENDPATH += %2/../
-
 # Add %1 to PRE_TARGETDEPS.
-# This causes to re-link this project whenever %1 is recompiled. This is
-# important, otherwise modifying a .cpp file in %1 would not cause this
-# project to link to the new version of %1, and therefore the change
-# would not be seen.
+# This causes to re-link against %1 whenever %1 is recompiled (for instance,
+# due a modification of a .cpp file in %1).
 unix:       PRE_TARGETDEPS += %3/lib%1.a
 win32-g++:  PRE_TARGETDEPS += %3/$$RELEASE_OR_DEBUG/lib%1.a
 else:win32: PRE_TARGETDEPS += %3/$$RELEASE_OR_DEBUG/%1.lib
@@ -209,56 +237,72 @@ class Project:
         self.srcPath = ""   # /home/user/QtProjectTemplate/src/Path/To/Project/Project.pro
 
         self.outDir = ""    # /home/user/QtProjectTemplate/build-Qt_5_5_GCC_64bit-Debug/Path/To/Project
-        self.outPath = ""   # /home/user/QtProjectTemplate/build-Qt_5_5_GCC_64bit-Debug/Path/To/Project/AutoBuild.pri
-
+        self.outPath = ""   # /home/user/QtProjectTemplate/build-Qt_5_5_GCC_64bit-Debug/Path/To/Project/.config.pri
 
         # Data parsed from project files
 
-        self.template = ""  # subdir | lib | app
-        self.depends  = []  # [ "Gui" ]
-        self.subdirs  = []  # [ "Core", "Gui", "App" ], [ "src/Gui", "tests/GuiTests" ], etc.
-
+        self.template = ""  # subdirs | lib | app
+        self.depends  = []  # Examples:
+                            #     []           for src/Core/Core.pro           (lib)
+                            #     [ "Core" ]   for src/Gui/Gui.pro             (lib)
+                            #     [ "Gui" ]    for src/App/App.pro             (app)
+                            #     []           for src/QtProjectTemplate.pro   (subdirs)
+        self.subdirs  = []  # Examples:
+                            #     []                       for src/Core/Core.pro           (lib)
+                            #     []                       for src/Gui/Gui.pro             (lib)
+                            #     []                       for src/App/App.pro             (app)
+                            #     [ "App", "Core", "Gui"]  for src/QtProjectTemplate.pro   (subdirs)
 
         # Transitive closure of the .depends relationship
 
-        self.tDepends           = set()  # { "Gui", "Core" } if self.depends = [ "Gui" ] and Gui.depends = [ "Core" ]
         self.tDependsIsComputed      = False  # Prevent computing more than once
         self.tDependsIsBeingComputed = False  # Detect cyclic dependencies
+        self.tDepends = set()                 # Examples:
+                                              #     {}                 for src/Core/Core.pro           (lib)
+                                              #     { "Core" }         for src/Gui/Gui.pro             (lib)
+                                              #     { "Gui", "Core" }  for src/App/App.pro             (app)
+                                              #     {}                 for src/QtProjectTemplate.pro   (subdirs)
 
+        # Same as tDepends, but ordered via topological sort
+        # This specifies the order in which libs should be linked against.
 
-        # Same set as above, but ordered via topological sort
-
-        self.sDepends = []  # [ "Core", "Gui" ] if self.tDepends = { "Gui", "Core" } and Gui.depends = [ "Core" ]
-
+        self.sDepends = []  # Examples:
+                            #     []                                        for src/Core/Core.pro            (lib)
+                            #     [ "Core" ]                                for src/Gui/Widgets/Widgets.pro  (lib)
+                            #     [ "Core", "Gui/Widgets" ]                 for src/Gui/Windows/Windows.pro  (lib)
+                            #     [ "Core", "Gui/Widgets", "Gui/Windows" ]  for src/App/App.pro              (app)
+                            #     []                                        for src/Gui/Gui.pro              (subdirs)
+                            #     []                                        for src/QtProjectTemplate.pro    (subdirs)
 
         # Parent/child relationship between projects
 
         self.parentProject = None
         self.subProjects = []
 
-
-        # Subdir info and resolved dependencies
+        # Subdir info dependencies
+        # This specifies the order in which subprojects should be built.
 
         self.subdir    = ""             # To/Project ( = dir of this project relative to parent project)
-        self.subdirKey = ""             # To_Project ( = key to identify this subdir)
-        self.subdirDependsKeys = set()  # Keys of subdirs that this subdir depends on. Examples:
-                                        #    subdirKey              subdirDependsKeys
-                                        #     "Core"           ->    {}
-                                        #     "Gui"            ->    {"Core"}
-                                        #     "App"            ->    {"Core", "Gui"}
-                                        #     "src_Gui"        ->    {}
-                                        #     "tests_GuiTests" ->    {"src_Gui"}
-                                        #
-                                        # These keys are always keys of sibling subdirs
-
+        self.subdirKey = ""             # To_Project ( = key to identify this subdir without using slashes)
+        self.subdirDependsKeys = set()  # Examples:
+                                        #     {}                 for src/Core/Core.pro            (lib)
+                                        #     {}                 for src/Gui/Widgets/Widgets.pro  (lib)
+                                        #     { "Widgets" }      for src/Gui/Windows/Windows.pro  (lib)
+                                        #     { "Core", "Gui" }  for src/App/App.pro              (app)
+                                        #     { "Core" }         for src/Gui/Gui.pro              (subdirs)
+                                        #     {}                 for src/QtProjectTemplate.pro    (subdirs)
 
 # Dictionary storing all projects in the distribution, accessed by their relDir
-# Example of keys:
-#     - "" (root project)
-#     - "Gui"
-#     - "Gui/src/Gui"
-#     - "Gui/tests/GuiTests"
-#     - "App"
+#
+# Example:
+#     {
+#         ""            : <Project instance> ,
+#         "Core"        : <Project instance> ,
+#         "Gui/Widgets" : <Project instance> ,
+#         "Gui/Windows" : <Project instance> ,
+#         "App"         : <Project instance>
+#     }
+#
 projects = {}
 
 # Dictionary to get a lib project from its name
@@ -281,11 +325,11 @@ for x in os.walk(srcDir):
 
             # Get path of directory relative to the root of the distribution
             # This path is used as key to identified the project.
-            project.relDir = dirname[len(srcDir)+1:]  # "Path/to/Project"
+            project.relDir = dirname[len(srcDir)+1:]  # "Path/To/Project"
 
             # Get relPath, srcDir, and outDir (special case of root project)
             if project.relDir == "":
-                project.relPath = project.filename  # "RootProject.pro"
+                project.relPath = project.filename  # "QtProjectTemplate.pro"
                 project.srcDir  = srcDir            # "/home/user/QtProjectTemplate/src"
                 project.outDir  = outDir            # "/home/user/QtProjectTemplate/build-Qt_5_5_GCC_64bit-Debug"
 
@@ -293,11 +337,11 @@ for x in os.walk(srcDir):
             else:
                 project.relPath = project.relDir + '/' + project.filename  # "Path/to/Project/Project.pro"
                 project.srcDir = srcDir + '/' + project.relDir             # "/home/user/QtProjectTemplate/src/Path/to/Project"
-                project.outDir = outDir + '/' + project.relDir             # "/home/user/QtProjectTemplate/build-Qt_5_5_GCC_64bit-Debug/Path/to/Project"
+                project.outDir = outDir + '/' + project.relDir             # "/home/user/QtProjectTemplate/build-Qt_5_5_GCC_64bit-Debug/Path/To/Project"
 
             # Get srcPath and outPath
             project.srcPath = project.srcDir + '/' + project.filename  # "/home/user/QtProjectTemplate/src/Path/to/Project/Project.pro"
-            project.outPath = project.outDir + '/AutoBuild.pri'        # "/home/user/QtProjectTemplate/build-Qt_5_5_GCC_64bit-Debug/Path/to/Project/AutoBuild.pro"
+            project.outPath = project.outDir + '/.config.pri'          # "/home/user/QtProjectTemplate/build-Qt_5_5_GCC_64bit-Debug/Path/To/Project/.config.pri"
 
             # Insert in dictionary storing all projects, using relDir as the key
             projects[project.relDir] = project
@@ -481,13 +525,13 @@ for relDir in projects:
     if project.template == "lib" or project.template == "app":
         f.write(prlText)
 
+    # Adds all headers of the distribution in include path
+    if project.template == "lib" or project.template == "app":
+        f.write(includeText)
+
     # Compile as a static library
     if project.template == "lib":
         f.write(staticLibText)
-
-    # Add self to INCLUDEPATH
-    if project.template == "lib":
-        f.write(addSelfToIncludePathText)
 
     # If project is a subdir
     if project.template == "subdirs":

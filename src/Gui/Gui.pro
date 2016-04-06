@@ -1,7 +1,13 @@
+TEMPLATE = lib
+QT += widgets
 
-TEMPLATE = subdirs
-SUBDIRS = \
-    src/Gui \
-    tests/GuiTests
+DEPENDS = \
+    Core
 
-include($$OUT_PWD/AutoBuild.pri)
+HEADERS += \
+    MainWindow.h
+
+SOURCES += \
+    MainWindow.cpp
+
+include($$OUT_PWD/.config.pri)
