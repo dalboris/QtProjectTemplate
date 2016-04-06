@@ -1,14 +1,11 @@
 
 TEMPLATE = lib
-QT += widgets
-
-DEPENDS = \
-    Core
+QT -= core gui
 
 HEADERS += \
-    MainWindow.h
+    Foo.h
 
 SOURCES += \
-    MainWindow.cpp
+    Foo.cpp
 
 include($$OUT_PWD/AutoBuild.pri)

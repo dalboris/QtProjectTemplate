@@ -6,17 +6,20 @@
 // license terms and conditions in the LICENSE.MIT file found in the top-level
 // directory of this distribution and at http://opensource.org/licenses/MIT
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef GUI_MAINWINDOW_H
+#define GUI_MAINWINDOW_H
 
 #include <QMainWindow>
+
+namespace Gui
+{
 
 class MainWindow: public QMainWindow
 {
 public:
     MainWindow();
-
-void foo() {}
 };
 
-#endif // MAINWINDOW_H
+} // namespace Gui
+
+#endif // GUI_MAINWINDOW_H

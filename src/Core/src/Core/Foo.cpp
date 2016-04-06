@@ -6,20 +6,16 @@
 // license terms and conditions in the LICENSE.MIT file found in the top-level
 // directory of this distribution and at http://opensource.org/licenses/MIT
 
-#include <Gui/MainWindow.h>
-
 #include <Core/Foo.h>
 
 #include <iostream>
 
-namespace Gui
+namespace Core
 {
 
-MainWindow::MainWindow()
+Foo::Foo()
 {
-    std::cout << "MainWindow::MainWindow()" << std::endl;
-
-    Core::Foo foo;
+    std::cout << "Foo::Foo()" << std::endl;
 }
 
-} // namespace Gui
+} // end namespace Core

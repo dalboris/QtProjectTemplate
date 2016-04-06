@@ -12,7 +12,8 @@ system($$PYTHON AutoBuild.py $$PWD $$OUT_PWD)
 TEMPLATE = subdirs
 SUBDIRS = \
     App \
-    Gui
+    Gui \
+    Core
 
 # Include AutoBuild.pri.
 include($$OUT_PWD/AutoBuild.pri)

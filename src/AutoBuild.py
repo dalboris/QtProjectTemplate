@@ -69,13 +69,13 @@ def read(filepath):
     f.close()
     return filedata
 
-# Gets TEMPLATE value
+# Returns the TEMPLATE value parsed from the given string.
 def getTemplate(string):
     match = re.search(r"TEMPLATE\s*=\s*\b(\w+)\b", string)
     if match:
         return match.groups()[0]
 
-# Gets DEPENDS value
+# Returns the DEPENDS value parsed from the given string.
 def getDepends(string):
     match = re.search(r"DEPENDS\s*=([^\n\\]*(\\[^\S\n]*\n[^\n\\]*)*)", string)
     if match:
@@ -87,7 +87,7 @@ def getDepends(string):
     else:
         return []
 
-# Gets SUBDIRS value
+# Returns the SUBDIRS value parsed from the given string.
 def getSubdirs(string):
     match = re.search(r"SUBDIRS\s*=([^\n\\]*(\\[^\S\n]*\n[^\n\\]*)*)", string)
     if match:
@@ -98,6 +98,15 @@ def getSubdirs(string):
         return re.findall(r"[/\w']+", subdirs)
     else:
         return []
+
+# Returns the project corresponding to the given libname.
+def getLibProject(libname):
+    if libname in libs:
+        return libs[libname]
+    else:
+        print ("Error: dependent library", libname, "not found. Note: you can only " +
+               "depends on 'TEMPLATE = lib' subprojects, maybe you tried to depend on " +
+               "a 'TEMPLATE = app' subproject?")
 
 
 #----------------------- some fixed config texts ------------------------------
@@ -111,6 +120,17 @@ headerText = """
 enableCpp11Text = """
 # Enable C++11
 CONFIG += c++11
+"""
+
+prlText = """
+# Tell qmake to create a .prl file for this library, and to use it when linking
+# against this library. This allows any application that links against this
+# library to also link against all libraries that this library depends on.
+# This is normally not necessary since AutoBuild.py also compute recursively
+# the dependencies and pass them all to the linker in the proper order, but
+# it doesn't hurt to keep these as well.
+CONFIG += create_prl
+CONFIG += link_prl
 """
 
 staticLibText = """
@@ -145,7 +165,7 @@ INCLUDEPATH += %2/../
 unix: QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_ISYSTEM %2/../
 
 # Add %1 to LIBS.
-# This fixes "undefined reference to `Foo::Foo()'" linking errors.
+# This fixes "undefined reference to `%1::Foo::Foo()'" linking errors.
 unix:  LIBS += -L%3/ -l%1
 win32: LIBS += -L%3/RELEASE_OR_DEBUG # XXX double-check on Windows
 
@@ -176,6 +196,9 @@ else:win32: PRE_TARGETDEPS += %3/RELEASE_OR_DEBUG/%1.lib
 class Project:
 
     def __init__(self):
+
+        # Project-related directories and filenames
+
         self.name = ""      # Project
         self.filename = ""  # Project.pro
 
@@ -188,12 +211,33 @@ class Project:
         self.outDir = ""    # /home/user/QtProjectTemplate/build-Qt_5_5_GCC_64bit-Debug/Path/To/Project
         self.outPath = ""   # /home/user/QtProjectTemplate/build-Qt_5_5_GCC_64bit-Debug/Path/To/Project/AutoBuild.pri
 
+
+        # Data parsed from project files
+
         self.template = ""  # subdir | lib | app
-        self.depends  = []  # [ "Lib1", "Lib2" ]
+        self.depends  = []  # [ "Gui" ]
         self.subdirs  = []  # [ "Core", "Gui", "App" ], [ "src/Gui", "tests/GuiTests" ], etc.
+
+
+        # Transitive closure of the .depends relationship
+
+        self.tDepends           = set()  # { "Gui", "Core" } if self.depends = [ "Gui" ] and Gui.depends = [ "Core" ]
+        self.tDependsIsComputed      = False  # Prevent computing more than once
+        self.tDependsIsBeingComputed = False  # Detect cyclic dependencies
+
+
+        # Same set as above, but ordered via topological sort
+
+        self.sDepends = []  # [ "Core", "Gui" ] if self.tDepends = { "Gui", "Core" } and Gui.depends = [ "Core" ]
+
+
+        # Parent/child relationship between projects
 
         self.parentProject = None
         self.subProjects = []
+
+
+        # Subdir info and resolved dependencies
 
         self.subdir    = ""             # To/Project ( = dir of this project relative to parent project)
         self.subdirKey = ""             # To_Project ( = key to identify this subdir)
@@ -206,6 +250,7 @@ class Project:
                                         #     "tests_GuiTests" ->    {"src_Gui"}
                                         #
                                         # These keys are always keys of sibling subdirs
+
 
 # Dictionary storing all projects in the distribution, accessed by their relDir
 # Example of keys:
@@ -281,6 +326,75 @@ for relDir in projects:
         libs[project.name] = project
 
 
+# Helper method:
+#
+# Computes the transitive closure of project.depends
+# and store it in project.tDepends.
+#
+# What makes this recursive function terminate is
+# that for libs which do not depend on any other
+# libs, then len(project.depends) == 0 and therefore
+# there is no recursion.
+#
+# Cyclic dependencies are detected and reported as an error.
+#
+def computeTDepends(project):
+    # Do nothing if already computed
+    if project.tDependsIsComputed:
+        pass
+
+    # Detect cyclic dependencies
+    if project.tDependsIsBeingComputed:
+        print "Error:", project.name, "has a cyclic dependency."
+        pass
+
+    # Mark as being computed
+    project.tDependsIsBeingComputed = True
+
+    # Compute
+    project.tDepends = set(project.depends)
+    for libname in project.depends:
+        libProject = getLibProject(libname)
+        computeTDepends(libProject)
+        project.tDepends = project.tDepends.union(libProject.tDepends)
+
+    # Mark as computedSet isComputed
+    project.tDependsIsBeingComputed = False
+    project.tDependsIsComputed = True
+
+
+# Compute the transitive closure of all projects .depends
+for relDir in projects:
+    # Get project
+    project = projects[relDir]
+
+    # Compute tDepends
+    computeTDepends(project)
+
+
+# Compare method for topological sort
+def dependsOn(libname1, libname2):
+    libProject1 = getLibProject(libname1)
+    libProject2 = getLibProject(libname2)
+    if libname1 in libProject2.tDepends:
+        return -1
+    elif libname2 in libProject1.tDepends:
+        return +1
+    else:
+        return 0
+
+# Compute a topological sort to have all transitive dependencies listed in
+# order (If lib1 depends on lib2, then lib1 appears after lib1 in the list)
+for relDir in projects:
+    # Get project
+    project = projects[relDir]
+
+    # Compute topological sort
+    tDepends = list(project.tDepends)
+    project.sDepends = sorted(tDepends, cmp=dependsOn)
+    print "sDepends(", relDir, ") =", project.sDepends
+
+
 # Set parent/child relationships
 for relDir in projects:
     # Get project
@@ -306,7 +420,8 @@ for relDir in projects:
             subProject.subdirKey = subdir.replace('/', '__')
 
         else:
-            print ("Error: subproject", subprojectRelDir, "of project", project.relDir, "not found.")
+            print ("Error: subproject", subProjectRelDir, "of project", project.relDir, "not found.")
+
 
 # Helper method:
 #
@@ -320,36 +435,30 @@ def getAncestors(project):
         ancestors.insert(0, ancestors[0].parentProject)
     return ancestors
 
+
 # Resolve subdirs dependencies based on lib/app dependencies
 for relDir in projects:
     # Get project
     project = projects[relDir]
 
     # For all lib/app dependency
-    for lib in project.depends:
-        if lib in libs:
-            # Get project of lib this project depends on
-            libProject = libs[lib]
+    for libname in project.sDepends:
+        # Get project of the lib this project depends on
+        libProject = getLibProject(libname)
 
-            # Get all ancestors of this project and of libProject
-            projectAncestors = getAncestors(project)
-            libProjectAncestors = getAncestors(libProject)
+        # Get all ancestors of this project and of libProject
+        projectAncestors = getAncestors(project)
+        libProjectAncestors = getAncestors(libProject)
 
-            # Find common ancestor
-            indexCommonAncestor = 0
-            while projectAncestors[indexCommonAncestor+1] == libProjectAncestors[indexCommonAncestor+1]:
-                indexCommonAncestor += 1
+        # Find common ancestor
+        indexCommonAncestor = 0
+        while projectAncestors[indexCommonAncestor+1] == libProjectAncestors[indexCommonAncestor+1]:
+            indexCommonAncestor += 1
 
-            # Add subdir dependency
-            dependentProject = projectAncestors[indexCommonAncestor+1]
-            dependeeProject  = libProjectAncestors[indexCommonAncestor+1]
-            dependentProject.subdirDependsKeys.add(dependeeProject.subdirKey)
-
-        else:
-            print ("Error: dependent library", lib, "not found. Note: you can only " +
-                   "depends on 'TEMPLATE = lib' subprojects, maybe you tried to depend on " +
-                   "a 'TEMPLATE = app' subproject?")
-
+        # Add subdir dependency
+        dependentProject = projectAncestors[indexCommonAncestor+1]
+        dependeeProject  = libProjectAncestors[indexCommonAncestor+1]
+        dependentProject.subdirDependsKeys.add(dependeeProject.subdirKey)
 
 
 # Generate all AutoBuild.pri files
@@ -370,12 +479,16 @@ for relDir in projects:
     if project.template == "lib" or project.template == "app":
         f.write(enableCpp11Text)
 
-    # If project is a lib
+    # Insert PRL config lines
+    if project.template == "lib" or project.template == "app":
+        f.write(prlText)
+
+    # Compile as a static library
     if project.template == "lib":
-        # Compile as a static library
         f.write(staticLibText)
 
-        # Add self to INCLUDEPATH
+    # Add self to INCLUDEPATH
+    if project.template == "lib":
         f.write(addSelfToIncludePathText)
 
     # If project is a subdir
@@ -401,21 +514,20 @@ for relDir in projects:
             f.write(subdirText)
 
     # Add text required whenever there is at least one lib dependency
-    if len(project.depends) > 0:
+    if len(project.sDepends) > 0:
         f.write(releaseOrDebugText)
 
-    # Add each dependent lib
-    for lib in project.depends:
-        if lib in libs:
-            libProject = libs[lib]
-            addThisLib = (addLibText.replace('%1', libProject.name)
-                                    .replace('%2', libProject.srcDir)
-                                    .replace('%3', libProject.outDir))
-            f.write(addThisLib)
-        else:
-            print ("Error: dependent library", lib, "not found. Note: you can only " +
-                   "depends on 'TEMPLATE = lib' subprojects, maybe you tried to depend on " +
-                   "a 'TEMPLATE = app' subproject?")
+    # Add each dependent lib in order
+    # Note that we use the reversed topological order since
+    # each library must appear in the linker command line *before* the
+    # libraries they depend on. This is counter-intuitive, but that's how it is.
+    #
+    for libname in reversed(project.sDepends):
+        libProject = getLibProject(libname)
+        addThisLib = (addLibText.replace('%1', libProject.name)
+                                .replace('%2', libProject.srcDir)
+                                .replace('%3', libProject.outDir))
+        f.write(addThisLib)
 
     # Close file
     f.close()

@@ -5,7 +5,7 @@ QT -= core gui
 QT += testlib
 
 DEPENDS = \
-    Gui
+    Core
 
 SOURCES += \
     main.cpp
