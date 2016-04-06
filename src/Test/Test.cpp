@@ -6,9 +6,9 @@
 namespace Test
 {
 
-int runTestsCommon_(QCoreApplication * app, int argc, char *argv[])
+int runTestsCommon_(int argc, char *argv[])
 {
-    app->setAttribute(Qt::AA_Use96Dpi, true);
+    QCoreApplication::setAttribute(Qt::AA_Use96Dpi, true);
     QTEST_SET_MAIN_SOURCE_PATH
 
     bool fail = false;
@@ -23,13 +23,13 @@ int runTestsCommon_(QCoreApplication * app, int argc, char *argv[])
 int runTests(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
-    return runTestsCommon_(&app, argc, argv);
+    return runTestsCommon_(argc, argv);
 }
 
 int runGuiTests(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    return runTestsCommon_(&app, argc, argv);
+    return runTestsCommon_(argc, argv);
 }
 
 } // end namespace Test

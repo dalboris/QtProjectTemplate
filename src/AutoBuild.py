@@ -167,7 +167,7 @@ unix: QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_ISYSTEM %2/../
 # Add %1 to LIBS.
 # This fixes "undefined reference to `%1::Foo::Foo()'" linking errors.
 unix:  LIBS += -L%3/ -l%1
-win32: LIBS += -L%3/RELEASE_OR_DEBUG # XXX double-check on Windows
+win32: LIBS += -L%3/$$RELEASE_OR_DEBUG/ -l%1
 
 # Add %1 to DEPENDPATH.
 # This adds all headers in %1 to the list of headers that qmake parses to
@@ -185,8 +185,8 @@ DEPENDPATH += %2/../
 # project to link to the new version of %1, and therefore the change
 # would not be seen.
 unix:       PRE_TARGETDEPS += %3/lib%1.a
-win32-g++:  PRE_TARGETDEPS += %3/RELEASE_OR_DEBUG/lib%1.a
-else:win32: PRE_TARGETDEPS += %3/RELEASE_OR_DEBUG/%1.lib
+win32-g++:  PRE_TARGETDEPS += %3/$$RELEASE_OR_DEBUG/lib%1.a
+else:win32: PRE_TARGETDEPS += %3/$$RELEASE_OR_DEBUG/%1.lib
 """
 
 
@@ -269,12 +269,11 @@ libs = {}
 
 # Find all project files
 for x in os.walk(srcDir):
-    dirname = x[0]
+    dirname = x[0].replace('\\', '/') # manually replace backslashes with slashes for Windows
     filenames = x[2]
     relativeDirname = dirname[len(srcDir)+1:]
     for filename in filenames:
         if filename.endswith('.pro'):
-
             # Create project object
             project = Project()
             project.filename = filename   # "Project.pro"
@@ -392,7 +391,6 @@ for relDir in projects:
     # Compute topological sort
     tDepends = list(project.tDepends)
     project.sDepends = sorted(tDepends, cmp=dependsOn)
-    print "sDepends(", relDir, ") =", project.sDepends
 
 
 # Set parent/child relationships
