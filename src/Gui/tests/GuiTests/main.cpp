@@ -1,10 +1,7 @@
 
-#include <iostream>
+#include <Test/Test.h>
 
-int main()
+int main(int argc, char *argv[])
 {
-    std::cout << "Testing Lib1..." << std::endl;
-    std::cout << "Success!" <<  std::endl;
-
-    return 0;
+    return Test::runGuiTests(argc, argv);
 }

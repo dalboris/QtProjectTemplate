@@ -11,6 +11,7 @@ system($$PYTHON AutoBuild.py $$PWD $$OUT_PWD)
 # the value of DEPENDS in subprojects.
 TEMPLATE = subdirs
 SUBDIRS = \
+    Test \
     App \
     Gui \
     Core
