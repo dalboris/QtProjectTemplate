@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # This script requires Python >= 2.6. I has been tested with Python 2.7.6 on
 # Ubuntu and Windows. It has not yet been tested with Python 3, or on MacOS,
 # but might just work.
@@ -49,7 +52,7 @@ srcDir = sys.argv[1]
 outDir = sys.argv[2]
 
 # QMake Config
-qmakeConfig = sys.argv[3]
+qmakeConfig = sys.argv[3:]
 
 
 #--------------------------- Helper functions ---------------------------------
@@ -163,6 +166,14 @@ headerText = """
 # IT IS LOCATED IN THE BUILD DIRECTORY.
 # ANY EDIT WILL BE LOST.
 """
+
+generateTestsText = """
+# Generate missing unit test files
+win32: PYTHON=python.exe
+else:  PYTHON=python
+system($$PYTHON %1/GenerateTests.py %1 $$_PRO_FILE_PWD_ $$OUT_PWD $$CONFIG)
+"""
+generateTestsText = generateTestsText.replace('%1', srcDir)
 
 enableCpp11Text = """
 # Enable C++11
@@ -367,8 +378,6 @@ for x in os.walk(srcDir):
 
             # Insert in dictionary storing all projects, using relDir as the key
             projects[project.relDir] = project
-            print project.srcPath
-            print project.outPath
 
 
 # Parse projects
@@ -536,6 +545,10 @@ for relDir in projects:
 
     # Write header
     f.write(headerText)
+
+    # Write python call to generate unit tests
+    if project.template == "lib" and project.relDir.startswith('Libs/'):
+        f.write(generateTestsText)
 
     # Enable C++11
     if project.template == "lib" or project.template == "app":
