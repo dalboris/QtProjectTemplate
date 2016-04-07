@@ -1,4 +1,3 @@
-
 # This script requires Python >= 2.6. I has been tested with Python 2.7.6 on
 # Ubuntu and Windows. It has not yet been tested with Python 3, or on MacOS,
 # but might just work.
@@ -48,6 +47,9 @@ srcDir = sys.argv[1]
 
 # Output build directory (where qmake builds to)
 outDir = sys.argv[2]
+
+# QMake Config
+qmakeConfig = sys.argv[3]
 
 
 #--------------------------- Helper functions ---------------------------------
@@ -135,18 +137,23 @@ def getSubdirs(inputConfig):
     return getVariableValuesAsList('SUBDIRS', inputConfig)
 
 # Returns the project corresponding to the given libname.
-def getLibProject(libRelDir):
-    errorMessage = ("Error: dependent library", libRelDir, "not found. Note: you can only " +
-                    "depends on 'TEMPLATE = lib' subprojects, maybe you tried to depend on " +
-                    "a 'TEMPLATE = app' subproject?")
-    if libRelDir in projects:
-        libProject = projects[libRelDir]
-        if libProject.template == 'lib':
-            return libProject
-        else:
-            print errorMessage
+# libname is the path of the library relative to Third or Libs.
+# Examples:
+#     Core
+#     Gui/Widgets
+#     Gui/Windows
+#     Geometry
+def getLibProject(libname):
+    if ("Third/" + libname) in projects:
+        libProject = projects[("Third/" + libname)]
+    elif ("Libs/" + libname) in projects:
+        libProject = projects[("Libs/" + libname)]
     else:
-        print errorMessage
+        libProject = None
+        print ("Error: dependent library", libRelDir, "not found. Note: you can only " +
+               "depends on 'TEMPLATE = lib' subprojects, maybe you tried to depend on " +
+               "a 'TEMPLATE = app' subproject?")
+    return libProject
 
 
 #----------------------- some fixed config texts ------------------------------
@@ -179,17 +186,20 @@ CONFIG += staticlib
 """
 
 includeText = """
-# Add src/ to INCLUDEPATH.
+# Add src/Libs/ and src/Third/ to INCLUDEPATH.
 # This fixes "cannot find MyLib/MyHeader.h" compile errors.
-INCLUDEPATH += %1/
-unix: QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_ISYSTEM %1/
+INCLUDEPATH += %1/Libs/
+INCLUDEPATH += %1/Third/
+unix: QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_ISYSTEM %1/Libs/
+unix: QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_ISYSTEM %1/Third/
 
-# Add src/ to DEPENDPATH.
+# Add src/Libs/ and src/Third/ to DEPENDPATH.
 # This causes to re-compile dependent .cpp files in this project, whenever
 # dependee .h files in src/ are modified. In Qt5, this is redundant with adding
 # src/ to INCLUDEPATH, but we keep it for documentation and compatibility with
 # Qt4.
-DEPENDPATH += %1/
+DEPENDPATH += %1/Libs/
+DEPENDPATH += %1/Third/
 """
 includeText = includeText.replace('%1', srcDir)
 
@@ -319,6 +329,10 @@ projects = {}
 
 #----------------------------- Actual script ----------------------------------
 
+# Write QMake CONFIG value in a file. This is used by tests, so they can link
+# against libraries build with the same config. If no folder is found containing
+# the same config, then it will create it.
+
 # Find all project files
 for x in os.walk(srcDir):
     dirname = x[0].replace('\\', '/') # manually replace backslashes with slashes for Windows
@@ -353,6 +367,8 @@ for x in os.walk(srcDir):
 
             # Insert in dictionary storing all projects, using relDir as the key
             projects[project.relDir] = project
+            print project.srcPath
+            print project.outPath
 
 
 # Parse projects

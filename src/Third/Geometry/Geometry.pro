@@ -2,9 +2,9 @@ TEMPLATE = lib
 QT -= core gui
 
 HEADERS += \
-    Foo.h
+    Point.h
 
 SOURCES += \
-    Foo.cpp
+    Point.cpp
 
 include($$OUT_PWD/.config.pri)
