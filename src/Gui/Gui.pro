@@ -1,13 +1,6 @@
-TEMPLATE = lib
-QT += widgets
-
-DEPENDS = \
-    Core
-
-HEADERS += \
-    MainWindow.h
-
-SOURCES += \
-    MainWindow.cpp
+TEMPLATE = subdirs
+SUBDIRS = \
+    Widgets \
+    Windows
 
 include($$OUT_PWD/.config.pri)

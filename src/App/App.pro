@@ -3,7 +3,7 @@ CONFIG += qt
 QT += widgets
 
 DEPENDS = \
-    Gui
+    Gui/Windows
 
 SOURCES += main.cpp
 

@@ -135,13 +135,18 @@ def getSubdirs(inputConfig):
     return getVariableValuesAsList('SUBDIRS', inputConfig)
 
 # Returns the project corresponding to the given libname.
-def getLibProject(libname):
-    if libname in libs:
-        return libs[libname]
+def getLibProject(libRelDir):
+    errorMessage = ("Error: dependent library", libRelDir, "not found. Note: you can only " +
+                    "depends on 'TEMPLATE = lib' subprojects, maybe you tried to depend on " +
+                    "a 'TEMPLATE = app' subproject?")
+    if libRelDir in projects:
+        libProject = projects[libRelDir]
+        if libProject.template == 'lib':
+            return libProject
+        else:
+            print errorMessage
     else:
-        print ("Error: dependent library", libname, "not found. Note: you can only " +
-               "depends on 'TEMPLATE = lib' subprojects, maybe you tried to depend on " +
-               "a 'TEMPLATE = app' subproject?")
+        print errorMessage
 
 
 #----------------------- some fixed config texts ------------------------------
@@ -243,25 +248,31 @@ class Project:
 
         self.template = ""  # subdirs | lib | app
         self.depends  = []  # Examples:
-                            #     []           for src/Core/Core.pro           (lib)
-                            #     [ "Core" ]   for src/Gui/Gui.pro             (lib)
-                            #     [ "Gui" ]    for src/App/App.pro             (app)
-                            #     []           for src/QtProjectTemplate.pro   (subdirs)
+                            #     []                 for src/Core/Core.pro            (lib)
+                            #     [ "Core" ]         for src/Gui/Widgets/Widgets.pro  (lib)
+                            #     [ "Gui/Widgets" ]  for src/Gui/Windows/Windows.pro  (lib)
+                            #     [ "Gui/Windows" ]  for src/App/App.pro              (app)
+                            #     []                 for src/Gui/Gui.pro              (subdirs)
+                            #     []                 for src/QtProjectTemplate.pro    (subdirs)
         self.subdirs  = []  # Examples:
-                            #     []                       for src/Core/Core.pro           (lib)
-                            #     []                       for src/Gui/Gui.pro             (lib)
-                            #     []                       for src/App/App.pro             (app)
-                            #     [ "App", "Core", "Gui"]  for src/QtProjectTemplate.pro   (subdirs)
+                            #     []                        for src/Core/Core.pro            (lib)
+                            #     []                        for src/Gui/Widgets/Widgets.pro  (lib)
+                            #     []                        for src/Gui/Windows/Windows.pro  (lib)
+                            #     []                        for src/App/App.pro              (app)
+                            #     [ "Widgets", "Windows"]   for src/Gui/Gui.pro              (subdirs)
+                            #     [ "Core", "Gui", "App" ]  for src/QtProjectTemplate.pro    (subdirs)
 
         # Transitive closure of the .depends relationship
 
         self.tDependsIsComputed      = False  # Prevent computing more than once
         self.tDependsIsBeingComputed = False  # Detect cyclic dependencies
         self.tDepends = set()                 # Examples:
-                                              #     {}                 for src/Core/Core.pro           (lib)
-                                              #     { "Core" }         for src/Gui/Gui.pro             (lib)
-                                              #     { "Gui", "Core" }  for src/App/App.pro             (app)
-                                              #     {}                 for src/QtProjectTemplate.pro   (subdirs)
+                                              #     {}                                        for src/Core/Core.pro            (lib)
+                                              #     { "Core" }                                for src/Gui/Widgets/Widgets.pro  (lib)
+                                              #     { "Gui/Widgets", "Core" }                 for src/Gui/Windows/Windows.pro  (lib)
+                                              #     { "Gui/Windows" ,"Core", "Gui/Widgets" }  for src/App/App.pro              (app)
+                                              #     {]                                        for src/Gui/Gui.pro              (subdirs)
+                                              #     {]                                        for src/QtProjectTemplate.pro    (subdirs)
 
         # Same as tDepends, but ordered via topological sort
         # This specifies the order in which libs should be linked against.
@@ -304,9 +315,6 @@ class Project:
 #     }
 #
 projects = {}
-
-# Dictionary to get a lib project from its name
-libs = {}
 
 
 #----------------------------- Actual script ----------------------------------
@@ -363,10 +371,6 @@ for relDir in projects:
 
     # Parse SUBDIRS value
     project.subdirs = getSubdirs(data)
-
-    # If project is a lib, add it to libs
-    if project.template == "lib":
-        libs[project.name] = project
 
 
 # Helper method:
@@ -503,15 +507,15 @@ for relDir in projects:
         dependentProject.subdirDependsKeys.add(dependeeProject.subdirKey)
 
 
-# Generate all AutoBuild.pri files
+# Generate all .config.pri files
 for relDir in projects:
     # Get project
     project = projects[relDir]
 
-    # Create directory containing this project's AutoBuild.pri
+    # Create directory containing this project's .config.pri
     mkdir_p(project.outDir)
 
-    # Create AutoBuild.pri file and open it
+    # Create .config.pri file and open it
     f = open(project.outPath, 'w')
 
     # Write header
