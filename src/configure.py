@@ -140,17 +140,17 @@ def getSubdirs(inputConfig):
     return getVariableValuesAsList('SUBDIRS', inputConfig)
 
 # Returns the project corresponding to the given libname.
-# libname is the path of the library relative to Third or Libs.
+# libname is the path of the library relative to third/ or libs/.
 # Examples:
 #     Core
 #     Gui/Widgets
 #     Gui/Windows
 #     Geometry
 def getLibProject(libname):
-    if ("Third/" + libname) in projects:
-        libProject = projects[("Third/" + libname)]
-    elif ("Libs/" + libname) in projects:
-        libProject = projects[("Libs/" + libname)]
+    if ("third/" + libname) in projects:
+        libProject = projects[("third/" + libname)]
+    elif ("libs/" + libname) in projects:
+        libProject = projects[("libs/" + libname)]
     else:
         libProject = None
         print ("Error: dependent library", libRelDir, "not found. Note: you can only " +
@@ -171,7 +171,7 @@ generateTestsText = """
 # Generate missing unit test files
 win32: PYTHON=python.exe
 else:  PYTHON=python
-system($$PYTHON %1/GenerateTests.py %1 $$_PRO_FILE_PWD_ $$OUT_PWD $$CONFIG)
+system($$PYTHON %1/generatetests.py %1 $$_PRO_FILE_PWD_ $$OUT_PWD $$CONFIG)
 """
 generateTestsText = generateTestsText.replace('%1', srcDir)
 
@@ -197,20 +197,20 @@ CONFIG += staticlib
 """
 
 includeText = """
-# Add src/Libs/ and src/Third/ to INCLUDEPATH.
+# Add src/libs/ and src/third/ to INCLUDEPATH.
 # This fixes "cannot find MyLib/MyHeader.h" compile errors.
-INCLUDEPATH += %1/Libs/
-INCLUDEPATH += %1/Third/
-unix: QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_ISYSTEM %1/Libs/
-unix: QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_ISYSTEM %1/Third/
+INCLUDEPATH += %1/libs/
+INCLUDEPATH += %1/third/
+unix: QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_ISYSTEM %1/libs/
+unix: QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_ISYSTEM %1/third/
 
-# Add src/Libs/ and src/Third/ to DEPENDPATH.
+# Add src/libs/ and src/third/ to DEPENDPATH.
 # This causes to re-compile dependent .cpp files in this project, whenever
 # dependee .h files in src/ are modified. In Qt5, this is redundant with adding
 # src/ to INCLUDEPATH, but we keep it for documentation and compatibility with
 # Qt4.
-DEPENDPATH += %1/Libs/
-DEPENDPATH += %1/Third/
+DEPENDPATH += %1/libs/
+DEPENDPATH += %1/third/
 """
 includeText = includeText.replace('%1', srcDir)
 
@@ -547,7 +547,7 @@ for relDir in projects:
     f.write(headerText)
 
     # Write python call to generate unit tests
-    if project.template == "lib" and project.relDir.startswith('Libs/'):
+    if project.template == "lib" and project.relDir.startswith('libs/'):
         f.write(generateTestsText)
 
     # Enable C++11
