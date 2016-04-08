@@ -1,5 +1,6 @@
 # Adds python scripts to project
 DISTFILES += \
+    buildutils.py \
     configure.py \
     generatetests.py
 

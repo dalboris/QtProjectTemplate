@@ -1,0 +1,4 @@
+
+def printsomething():
+    print 'something'
+    

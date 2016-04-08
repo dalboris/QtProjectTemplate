@@ -1,2 +1,3 @@
-
-TEMPLATE = lib
+TEMPLATE = subdirs
+SUBDIRS = \
+    libs
