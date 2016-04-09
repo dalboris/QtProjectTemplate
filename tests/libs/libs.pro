@@ -3,5 +3,6 @@
 
 TEMPLATE = subdirs
 SUBDIRS = \
+    $$OUT_PWD/.runtests \
     Core \
     Gui

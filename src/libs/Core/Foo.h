@@ -12,6 +12,6 @@ public:
     int return42();
 };
 
-} // end namespace Core
+} // namespace Core
 
 #endif // CORE_FOO_H

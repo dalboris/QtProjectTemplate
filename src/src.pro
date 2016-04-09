@@ -2,7 +2,8 @@
 DISTFILES += \
     buildutils.py \
     configure.py \
-    generatetests.py
+    makelibtests.py \
+    makesubdirstests.py
 
 # Execute 'configure.py' script. This script automatically generates, in the
 # build directory, a .config.pri file for each project in the distribution.

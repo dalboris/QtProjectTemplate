@@ -3,4 +3,5 @@
 
 TEMPLATE = subdirs
 SUBDIRS = \
+    Test_Core_Bar \
     Test_Core_Foo

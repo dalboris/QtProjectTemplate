@@ -3,13 +3,15 @@
 
 #--------------------------- Required modules ---------------------------------
 
-import buildutils
-
-buildutils.printsomething()
-
+# Built-in modules
 import sys
 import os
+import shutil
 import errno
+import re
+
+# Curstom module
+import buildutils
 
 
 #---------------------- Various useful variables ------------------------------
@@ -67,25 +69,12 @@ class HeaderTest:
 headerTests = {}
 
 
-#--------------------------- Helper functions ---------------------------------
-
-# Creates a directory and all its parent (if they don't already exist)
-def mkdir_p(dirpath):
-    try:
-        os.makedirs(dirpath)
-    except OSError as exc:  # Python >2.5
-        if exc.errno == errno.EEXIST and os.path.isdir(dirpath):
-            pass
-        else:
-            raise
-
-
 #------------ Find all headers for which a test should be created -------------
 
 # Find all header files
 for x in os.walk(srcLibDir):
     dir = x[0].replace('\\', '/')        # /home/<user>/<root-dir>/src/libs/a/b/Lib/c/d
-    relDir = dir[len(srcLibDir)+1:]  # c/d
+    relDir = dir[len(srcLibDir)+1:]      # c/d
     filenames = x[2]                     # [ 'Foo.h', 'Foo.cpp', 'Bar.h', 'Bar.cpp' ]
     for filename in filenames:
         if filename.endswith('.h'):
@@ -119,9 +108,6 @@ for x in os.walk(srcLibDir):
 
 #-------------------- Make lib's test folder and project ----------------------
 
-# Make directory for this lib test
-mkdir_p(testsLibDir)
-
 # Get file for this test project
 testsLibProFileName = libName + '.pro'
 testsLibProFilePath = os.path.join(testsLibDir, testsLibProFileName)
@@ -135,19 +121,8 @@ for testRelDir in sorted(headerTests):
     testsLibProText += " \\\n    " + testRelDir
 testsLibProText += "\n"
 
-# Get existing text if the project file already exists.
-if os.path.isfile(testsLibProFilePath):
-    f = open(testsLibProFilePath, 'r')
-    testsLibProOldText = f.read()
-    f.close()
-else:
-    testsLibProOldText = ""
-
-# If the new text and the existing text differ, then write new text to file
-if testsLibProText != testsLibProOldText:
-    f = open(testsLibProFilePath, 'w')
-    f.write(testsLibProText)
-    f.close()
+# Writes to file
+buildutils.writeToFileIfDifferent(testsLibProFilePath, testsLibProText)
 
 
 #------------- Make header's test folder, project, and cpp file -------------
@@ -156,15 +131,12 @@ for testRelDir in headerTests:
     # Get HeaderTest
     headerTest = headerTests[testRelDir]
 
-    # Make directory for this header test
-    mkdir_p(headerTest.testDir)
-
     # Make project file for this header test
-    f = open(headerTest.testProFilePath, 'w')
-    f.write("TEMPLATE = app\nSOURCES = " + headerTest.testCppFileName + "\n")
-    f.close()
+    if not os.path.isfile(headerTest.testProFilePath):
+        testProFileContent = "TEMPLATE = app\nSOURCES = " + headerTest.testCppFileName + "\n"
+        buildutils.writeToFile(headerTest.testProFilePath, testProFileContent)
 
     # Make C++ file for this header test
-    f = open(headerTest.testCppFilePath, 'w')
-    f.write("#include <iostream>\nint main() { std::cout << \"Hello World\\n\"; }\n")
-    f.close()
+    if not os.path.isfile(headerTest.testCppFilePath):
+        testCppFileContent = "#include <iostream>\nint main() { std::cout << \"Hello World\\n\"; }\n"
+        buildutils.writeToFile(headerTest.testCppFilePath, testCppFileContent)

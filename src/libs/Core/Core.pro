@@ -1,13 +1,15 @@
 TEMPLATE = lib
-QT -= core gui
+CONFIG -= qt
 
 DEPENDS = \
     Geometry
 
 HEADERS += \
-    Foo.h
+    Foo.h \
+    Bar.h
 
 SOURCES += \
-    Foo.cpp
+    Foo.cpp \
+    Bar.cpp
 
 include($$OUT_PWD/.config.pri)

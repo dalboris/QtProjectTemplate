@@ -1,0 +1,29 @@
+#ifndef TEST_H
+#define TEST_H
+
+#include <QtTest/QtTest>
+#include <QObject>
+
+typedef QObject TestCase;
+
+class CoreTest: public QObject
+{
+    
+};
+
+namespace Test
+{
+
+template <class AppType, class TestType>
+int main(int argc, char *argv[])
+{
+    AppType app(argc, argv);
+    QCoreApplication::setAttribute(Qt::AA_Use96Dpi, true);
+    QTEST_SET_MAIN_SOURCE_PATH
+    TestType test;
+    return QTest::qExec(&test, argc, argv);
+}
+
+}
+
+#endif // TEST_H
