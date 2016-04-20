@@ -1,8 +1,8 @@
 
 #include <CoreTest.h>
-#include <Core/Foo.h>
+#include <Core/Bar.h>
 
-class Test_Core_Foo: public QObject
+class Test_Core_Bar: public QObject
 {
     Q_OBJECT
 

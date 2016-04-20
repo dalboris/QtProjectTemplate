@@ -2,7 +2,7 @@ TEMPLATE = app
 CONFIG += qt
 QT += widgets
 
-DEPENDS = \
+LIB_DEPENDS = \
     Gui/Windows
 
 SOURCES += main.cpp

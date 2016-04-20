@@ -25,14 +25,25 @@ import shutil
 import errno
 import re
 
-runtests_pro = """
+runtests_pro = (
+"""
+#####################################################################
+#   This file was automatically generated. Any edit will be lost.   #
+#####################################################################
+
 TEMPLATE = app
 CONFIG  -= qt
 TARGET   = runtests
 SOURCES  = runtests.cpp
 """
+)
 
-runtests_cpp = """
+runtests_cpp = (
+"""
+/*********************************************************************
+ *   This file was automatically generated. Any edit will be lost.   *
+ *********************************************************************/
+
 #include <cstdlib>
 
 int main()
@@ -40,8 +51,14 @@ int main()
     return std::system("python runtests.py");
 }
 """
+)
 
-runtests_py = """
+runtests_py = (
+"""
+#####################################################################
+#   This file was automatically generated. Any edit will be lost.   #
+#####################################################################
+
 import subprocess
 
 print "Hi from runtests.py"
@@ -57,6 +74,7 @@ print "Hi from runtests.py"
 #print "returncode of subprocess:"
 #print sp.returncode
 """
+)
 
 # Creates a directory and all its parent (if they don't already exist)
 def mkdir(dirpath):
@@ -92,9 +110,23 @@ def writeToFile(filePath, fileContent):
 
 # Same as above, but test first for content and only erases if content differs.
 def writeToFileIfDifferent(filePath, fileContent):
-    existingFileContent = readFromFileIfExists(filePath)
-    if fileContent != existingFileContent:
+    if os.path.isfile(filePath):
+        existingFileContent = readFromFile(filePath)
+        if fileContent != existingFileContent:
+            writeToFile(filePath, fileContent)
+    else:
         writeToFile(filePath, fileContent)
+
+
+# Returns as a string the value of the given qmake variable 'variableName',
+# defined in the given inputConfig. Returns None if the variable
+# is not found.
+def getVariableValueAsString(variableName, inputConfig):
+    regexPattern = variableName + r"\s*=([^\n\\]*(\\[^\S\n]*\n[^\n\\]*)*)"
+    match = re.search(regexPattern, inputConfig)
+    if match:
+        # Matched string (something like " \\\n    value1 \\\n    value2")
+        return match.groups()[0]
 
 # Returns the TEMPLATE value parsed from the given string.
 def getTemplate(string):
@@ -160,3 +192,46 @@ def getDepends(inputConfig):
 # Returns the SUBDIRS value parsed from the given string.
 def getSubdirs(inputConfig):
     return getVariableValuesAsList('SUBDIRS', inputConfig)
+
+def qmakeStringToList(s):
+    return re.findall(r"[/\w']+", s)
+
+# Returns as a list the values of the given qmake variable 'variableName',
+# defined in the given inputConfig. Returns an empty list if the variable
+# is not found. Take into account =, +=, and -=. Though, does not take
+# into account order. Only the first '=' is taken into account. All +=
+# are processed before all -=.
+def getQmakeVariable(variableName, inputConfig, initialValues=[]):
+    # Regex pattern
+    regexPattern = variableName + r"\s*_SIGN_([^\n\\]*(\\[^\S\n]*\n[^\n\\]*)*)"
+    regexPatternEqual      = regexPattern.replace("_SIGN_", r"=")
+    regexPatternPlusEqual  = regexPattern.replace("_SIGN_", r"\+=")
+    regexPatternMinusEqual = regexPattern.replace("_SIGN_", r"-=")
+
+    # Search for regex
+    matchEqual      = re.search(regexPatternEqual, inputConfig)
+    matchPlusEqual  = re.findall(regexPatternPlusEqual, inputConfig)
+    matchMinusEqual = re.findall(regexPatternMinusEqual, inputConfig)
+
+    # Initial value
+    values = initialValues
+
+    # Override if '=' found
+    if matchEqual:
+        string = matchEqual.groups()[0]
+        values = qmakeStringToList(string)
+
+    # Add all '+=' found
+    for match in matchPlusEqual:
+        string = match[0]
+        values.extend(qmakeStringToList(string))
+
+    # Remove all '+=' found
+    for match in matchMinusEqual:
+        string = match[0]
+        strings = qmakeStringToList(string)
+        values = [ s for s in values if (s not in strings) ]
+
+    return values
+
+

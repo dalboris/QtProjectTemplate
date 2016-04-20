@@ -1,7 +1,7 @@
 TEMPLATE = lib
 QT += widgets
 
-DEPENDS = \
+LIB_DEPENDS = \
     Gui/Widgets
 
 HEADERS += \

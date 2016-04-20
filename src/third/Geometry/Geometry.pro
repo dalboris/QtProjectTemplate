@@ -1,5 +1,5 @@
 TEMPLATE = lib
-QT -= core gui
+CONFIG -= qt
 
 HEADERS += \
     Point.h

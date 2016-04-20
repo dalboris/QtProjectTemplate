@@ -1,7 +1,7 @@
 TEMPLATE = lib
 CONFIG -= qt
 
-DEPENDS = \
+THIRD_DEPENDS = \
     Geometry
 
 HEADERS += \

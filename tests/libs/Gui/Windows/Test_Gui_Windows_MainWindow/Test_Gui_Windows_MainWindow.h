@@ -1,8 +1,8 @@
 
 #include <CoreTest.h>
-#include <Core/Foo.h>
+#include <Gui/Windows/MainWindow.h>
 
-class Test_Core_Foo: public QObject
+class Test_Gui_Windows_MainWindow: public QObject
 {
     Q_OBJECT
 

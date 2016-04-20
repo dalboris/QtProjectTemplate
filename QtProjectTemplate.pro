@@ -1,7 +1,7 @@
+# Configure
+include(buildtools/configure.pri)
+
+# Subdir template
 TEMPLATE = subdirs
 CONFIG += ordered
-SUBDIRS = src
-
-#!isEmpty(BUILD_TESTS): SUBDIRS += tests
-SUBDIRS += tests
-
+SUBDIRS = src tests

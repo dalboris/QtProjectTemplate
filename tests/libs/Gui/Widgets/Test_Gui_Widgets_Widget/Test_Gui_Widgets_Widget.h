@@ -1,8 +1,8 @@
 
 #include <CoreTest.h>
-#include <Core/Foo.h>
+#include <Gui/Widgets/Widget.h>
 
-class Test_Core_Foo: public QObject
+class Test_Gui_Widgets_Widget: public QObject
 {
     Q_OBJECT
 
