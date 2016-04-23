@@ -10,8 +10,11 @@ DEFINES += QMAKE_QMAKESPEC=\\\"$$QMAKESPEC\\\"
 SOURCES += \
     main.cpp \
     MainWindow.cpp \
-    TestRunner.cpp
+    TestRunner.cpp \
+    TestsTreeWidget.cpp
 
 HEADERS += \
     MainWindow.h \
-    TestRunner.h
+    TestRunner.h \
+    TestsTreeWidget.h
+

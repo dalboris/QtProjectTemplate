@@ -5,6 +5,8 @@
 #include <QTextDocument>
 
 class TestRunner;
+class TestsTreeWidget;
+
 class QPushButton;
 class QTextEdit;
 
@@ -27,6 +29,7 @@ private:
     QPushButton * compileButton_;
     QPushButton * runButton_;
     QTextEdit * textEdit_;
+    TestsTreeWidget * unitTestsTreeWidget_;
     QTextDocument textDocument_;
 };
 

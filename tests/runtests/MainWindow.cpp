@@ -1,10 +1,12 @@
 #include "MainWindow.h"
 #include "TestRunner.h"
+#include "TestsTreeWidget.h"
 
 #include <QPushButton>
 #include <QTextEdit>
 #include <QHBoxLayout>
 #include <QFontDatabase>
+#include <QSplitter>
 
 #include <QtDebug>
 
@@ -55,6 +57,11 @@ MainWindow::MainWindow()
     unitOutDir.mkdir("unit");
     unitOutDir.cd("unit");
 
+    // Unit tests tree widget
+    unitTestsTreeWidget_ = new TestsTreeWidget(unitDir, unitOutDir);
+
+    /*
+
     // Test runner
     testRunner_ = new TestRunner(unitDir, unitOutDir, "tst_Bar.cpp", this);
     connect(testRunner_, &TestRunner::compileFinished, this, &MainWindow::onCompileFinished_);
@@ -63,26 +70,23 @@ MainWindow::MainWindow()
     // Buttons
     compileButton_ = new QPushButton("Compile");
     runButton_ = new QPushButton("Run");
-
+*/
     // Text Edit
     textDocument_.setDefaultFont(getMonospaceFont());
     textEdit_ = new QTextEdit();
     textEdit_->setDocument(&textDocument_);
     textEdit_->setReadOnly(true);
-    //textEdit_->setLineWrapMode(QTextEdit::NoWrap);
 
-    // Set layout
-    QHBoxLayout * layout = new QHBoxLayout();
-    layout->addWidget(compileButton_);
-    layout->addWidget(runButton_);
-    layout->addWidget(textEdit_);
-    QWidget * widget = new QWidget();
-    widget->setLayout(layout);
-    setCentralWidget(widget);
+    QSplitter * splitter = new QSplitter();
+    splitter->addWidget(unitTestsTreeWidget_);
+    splitter->addWidget(textEdit_);
+    splitter->setCollapsible(0, false);
+    splitter->setCollapsible(1, false);
+    setCentralWidget(splitter);
 
     // Compile on click
-    connect(compileButton_, &QPushButton::clicked, this, &MainWindow::onCompileButtonClicked_);
-    connect(runButton_, &QPushButton::clicked, this, &MainWindow::onRunButtonClicked_);
+    //connect(compileButton_, &QPushButton::clicked, this, &MainWindow::onCompileButtonClicked_);
+    //connect(runButton_, &QPushButton::clicked, this, &MainWindow::onRunButtonClicked_);
 }
 
 void MainWindow::onCompileButtonClicked_()
