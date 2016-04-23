@@ -1,5 +1,5 @@
 # Configure
-include(buildtools/configure.pri)
+include(configure/configure.pri)
 
 # Subdir template
 TEMPLATE = subdirs

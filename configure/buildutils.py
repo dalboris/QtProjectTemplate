@@ -1,23 +1,5 @@
-
-# Tests are organized in "test modules"
-# Each test module is made of:
-#   1. a static lib  '.def_My_Module_Tests'
-#   2. an app        '.run_My_Module_Tests'
-#   3. sub-modules
-#
-# The static lib '.def_My_Module_Tests' is made of one global function
-# called run_My_Module_Tests() which is declared/defined in
-#    .def_My_Module_Tests/My_Module_Tests.h
-#    .def_My_Module_Tests/My_Module_Tests.cpp
-#
-# This function
-#
-# The app '.run_My_Module_Tests'
-# Which is simply made of one global   .def_My_Module_Tests/My_Module_Tests.cpp
-#
-# The static lib is made of one class 'My_Module_Tests' defined in
-#    .def_My_Module_Tests/My_Module_Tests.h
-#    .def_My_Module_Tests/My_Module_Tests.cpp
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import sys
 import os

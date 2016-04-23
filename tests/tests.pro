@@ -1,4 +1,6 @@
 TEMPLATE = subdirs
 SUBDIRS = \
-    testsuite \
-    libs
+    testlib \
+    runtests \
+    unit
+

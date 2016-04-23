@@ -608,11 +608,11 @@ for relDir in projects:
         content += "LIB_SDEPENDS   = " + " ".join(project.lib_sdepends)   + "\n"
 
     # Write python calls that generates unit tests
-    if project.relDir.startswith('libs'):
-        if project.template == "lib":
-            content += makelibtestsText
-        elif project.template == "subdirs":
-            content += makesubdirstestsText
+    #if project.relDir.startswith('libs'):
+    #    if project.template == "lib":
+    #        content += makelibtestsText
+    #    elif project.template == "subdirs":
+    #        content += makesubdirstestsText
 
     # Enable C++11
     if project.template == "lib" or project.template == "app":
