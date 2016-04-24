@@ -51,6 +51,10 @@ public:
                const QString & fileName,
                QObject * parent = nullptr);
 
+    /// Returns the name of the test.
+    ///
+    QString testName() const;
+
     /// Returns the status of the TestRunner.
     ///
     Status status() const;

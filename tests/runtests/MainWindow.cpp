@@ -1,12 +1,15 @@
 #include "MainWindow.h"
 #include "TestRunner.h"
 #include "TestsTreeWidget.h"
+#include "TestsTreeModel.h"
+#include "TestsTreeView.h"
 
 #include <QPushButton>
 #include <QTextEdit>
 #include <QHBoxLayout>
 #include <QFontDatabase>
 #include <QSplitter>
+#include <QHeaderView>
 
 #include <QtDebug>
 
@@ -57,8 +60,23 @@ MainWindow::MainWindow()
     unitOutDir.mkdir("unit");
     unitOutDir.cd("unit");
 
-    // Unit tests tree widget
-    unitTestsTreeWidget_ = new TestsTreeWidget(unitDir, unitOutDir);
+    // Unit tests tree
+    //unitTestsTreeWidget_ = new TestsTreeWidget(unitDir, unitOutDir);
+    unitTestsTreeModel_ = new TestsTreeModel(unitDir, unitOutDir);
+    TestsTreeView * unitTestsTreeView = new TestsTreeView();
+    unitTestsTreeView->setModel(unitTestsTreeModel_);
+    unitTestsTreeView->header()->setDefaultAlignment(Qt::AlignCenter);
+    unitTestsTreeView->header()->setStretchLastSection(false);
+    unitTestsTreeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    unitTestsTreeView->header()->setSectionResizeMode(1, QHeaderView::Fixed);
+    unitTestsTreeView->header()->setSectionResizeMode(2, QHeaderView::Fixed);
+    unitTestsTreeView->header()->resizeSection(1, 20);
+    unitTestsTreeView->header()->resizeSection(2, 100);
+    //unitTestsTreeView->header()->moveSection(0, 2);
+
+    unitTestsTreeView->setI
+
+    //unitTestsTreeView->setColumnSiWidth(1, 10);
 
     /*
 
@@ -78,7 +96,8 @@ MainWindow::MainWindow()
     textEdit_->setReadOnly(true);
 
     QSplitter * splitter = new QSplitter();
-    splitter->addWidget(unitTestsTreeWidget_);
+    //splitter->addWidget(unitTestsTreeWidget_);
+    splitter->addWidget(unitTestsTreeView);
     splitter->addWidget(textEdit_);
     splitter->setCollapsible(0, false);
     splitter->setCollapsible(1, false);

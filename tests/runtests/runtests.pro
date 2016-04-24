@@ -11,10 +11,21 @@ SOURCES += \
     main.cpp \
     MainWindow.cpp \
     TestRunner.cpp \
-    TestsTreeWidget.cpp
+    TestsTreeWidget.cpp \
+    TestsTreeWidgetItemWidget.cpp \
+    TestsTreeModel.cpp \
+    TestsTreeItem.cpp \
+    TestsTreeView.cpp \
+    TestsTreeDelegate.cpp
 
 HEADERS += \
     MainWindow.h \
     TestRunner.h \
-    TestsTreeWidget.h
+    TestsTreeWidget.h \
+    TestsTreeWidgetItemWidget.h \
+    TestsTreeModel.h \
+    TestsTreeItem.h \
+    TestsTreeView.h \
+    TestsTreeDelegate.h
+
 

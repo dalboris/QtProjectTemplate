@@ -1,4 +1,5 @@
 #include "TestsTreeWidget.h"
+#include "TestRunner.h"
 
 #include <QMessageBox>
 
@@ -89,6 +90,7 @@ QList<QTreeWidgetItem *> getChildren_(const QDir & dir, const QDir & outDir)
     // Insert test file items
     for (int i = 0; i < testFiles.size(); ++i)
     {
+        TestRunner * testRunner = new TestRunner(dir, outDir, testFiles[i].fileName());
         QString name = testFiles[i].baseName();
         QTreeWidgetItem * item = makeItem_(name);
         items.append(item);

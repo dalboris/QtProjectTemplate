@@ -124,7 +124,16 @@ TestRunner::TestRunner(const QDir & inDir,
     compileOutput_(),
     runOutput_()
 {
+    const QString filePath = inDir_.filePath(fileName_);
+    const QFileInfo fileInfo(filePath);
+    testName_ = fileInfo.baseName();
+
     process_ = new QProcess(this);
+}
+
+QString TestRunner::testName() const
+{
+    return testName_;
 }
 
 TestRunner::Status TestRunner::status() const
@@ -179,12 +188,10 @@ void TestRunner::failCompilation_(const QString & errorMessage)
 
 void TestRunner::compile()
 {
-    // Get info about test source
+    // Check when is the last time that the test source has been modified
     const QString filePath = inDir_.filePath(fileName_);
     const QFileInfo fileInfo(filePath);
     const QDateTime lastModified = fileInfo.lastModified();
-    const QString testName = fileInfo.baseName();
-    testName_ = testName;
 
     // Compile if necessary
     Status s = status();
@@ -199,12 +206,12 @@ void TestRunner::compile()
 
         // -------- Go to folder where to compile test --------
 
-        QString compileDirPath = outDir_.absoluteFilePath(testName);
+        QString compileDirPath = outDir_.absoluteFilePath(testName_);
         compileDir_ = outDir_;
-        if (!compileDir_.cd(testName))
+        if (!compileDir_.cd(testName_))
         {
             // Create folder since it doesn't exist
-            if (!outDir_.mkdir(testName))
+            if (!outDir_.mkdir(testName_))
             {
                 failCompilation_("Can't create build folder " + compileDirPath);
                 return;
@@ -213,7 +220,7 @@ void TestRunner::compile()
             // Go to folder where to compile test
             // This is hard to reach (if we manage to create the folder, surely
             // we can cd to it), but doesn't hurt to check.
-            if (!compileDir_.cd(testName))
+            if (!compileDir_.cd(testName_))
             {
                 failCompilation_("Can't create build folder " + compileDirPath);
                 return;
@@ -223,9 +230,9 @@ void TestRunner::compile()
 
         // -------- Open all files for reading or writing --------
 
-        const QString hFileName   = testName + ".gen.h";
-        const QString cppFileName = testName + ".gen.cpp";
-        const QString proFileName = testName + ".gen.pro";
+        const QString hFileName   = testName_ + ".gen.h";
+        const QString cppFileName = testName_ + ".gen.cpp";
+        const QString proFileName = testName_ + ".gen.pro";
 
         const QString hFilePath   = compileDir_.filePath(hFileName);
         const QString cppFilePath = compileDir_.filePath(cppFileName);
@@ -273,9 +280,9 @@ void TestRunner::compile()
         QTextStream cppStream(&cppFile);
         QTextStream proStream(&proFile);
 
-        hStream   << generateH(testName, testSource);
-        cppStream << generateCpp(testName);
-        proStream << generatePro(testName);
+        hStream   << generateH(testName_, testSource);
+        cppStream << generateCpp(testName_);
+        proStream << generatePro(testName_);
 
 
         // -------- Run qmake --------

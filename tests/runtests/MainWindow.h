@@ -9,6 +9,7 @@ class TestsTreeWidget;
 
 class QPushButton;
 class QTextEdit;
+class TestsTreeModel;
 
 class MainWindow: public QMainWindow
 {
@@ -31,6 +32,8 @@ private:
     QTextEdit * textEdit_;
     TestsTreeWidget * unitTestsTreeWidget_;
     QTextDocument textDocument_;
+
+    TestsTreeModel * unitTestsTreeModel_;
 };
 
 #endif // MAINWINDOW_H
