@@ -7,25 +7,26 @@ DEFINES += QMAKE_OUT_PWD=\\\"$$OUT_PWD\\\"
 DEFINES += QMAKE_QMAKE_QMAKE=\\\"$$QMAKE_QMAKE\\\"
 DEFINES += QMAKE_QMAKESPEC=\\\"$$QMAKESPEC\\\"
 
+RESOURCES += resources.qrc
+
 SOURCES += \
     main.cpp \
     MainWindow.cpp \
     TestRunner.cpp \
-    TestsTreeWidget.cpp \
-    TestsTreeWidgetItemWidget.cpp \
-    TestsTreeModel.cpp \
-    TestsTreeItem.cpp \
-    TestsTreeView.cpp \
-    TestsTreeDelegate.cpp
+    DirUtils.cpp \
+    DirTestItem.cpp \
+    FileTestItem.cpp \
+    TestItem.cpp \
+    TestTreeModel.cpp \
+    TestTreeView.cpp
 
 HEADERS += \
     MainWindow.h \
     TestRunner.h \
-    TestsTreeWidget.h \
-    TestsTreeWidgetItemWidget.h \
-    TestsTreeModel.h \
-    TestsTreeItem.h \
-    TestsTreeView.h \
-    TestsTreeDelegate.h
-
+    DirUtils.h \
+    DirTestItem.h \
+    FileTestItem.h \
+    TestItem.h \
+    TestTreeModel.h \
+    TestTreeView.h
 

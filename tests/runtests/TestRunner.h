@@ -104,6 +104,10 @@ signals:
     ///
     void runFinished(bool success);
 
+    /// Signal emitted whenever the status changed
+    ///
+    void statusChanged(Status status);
+
 private slots:
     void compile_onQmakeFinished_(int exitCode, QProcess::ExitStatus exitStatus);
     void compile_onMakeFinished_(int exitCode, QProcess::ExitStatus exitStatus);
@@ -111,6 +115,7 @@ private slots:
     void run_onTestFinished_(int exitCode, QProcess::ExitStatus exitStatus);
 
 private:
+    void setStatus_(Status status);
     void failCompilation_(const QString & errorMessage);
 
 private:

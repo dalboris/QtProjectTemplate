@@ -4,12 +4,8 @@
 #include <QMainWindow>
 #include <QTextDocument>
 
-class TestRunner;
-class TestsTreeWidget;
-
-class QPushButton;
+class TestTreeModel;
 class QTextEdit;
-class TestsTreeModel;
 
 class MainWindow: public QMainWindow
 {
@@ -18,22 +14,11 @@ class MainWindow: public QMainWindow
 public:
     MainWindow();
 
-private slots:
-    void onCompileButtonClicked_();
-    void onRunButtonClicked_();
-
-    void onCompileFinished_();
-    void onRunFinished_();
-
 private:
-    TestRunner * testRunner_;
-    QPushButton * compileButton_;
-    QPushButton * runButton_;
-    QTextEdit * textEdit_;
-    TestsTreeWidget * unitTestsTreeWidget_;
-    QTextDocument textDocument_;
+    TestTreeModel * testTreeModel_;
 
-    TestsTreeModel * unitTestsTreeModel_;
+    QTextDocument textDocument_;
+    QTextEdit * textEdit_;
 };
 
 #endif // MAINWINDOW_H

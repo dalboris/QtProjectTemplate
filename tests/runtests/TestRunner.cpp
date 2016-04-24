@@ -182,7 +182,7 @@ void TestRunner::failCompilation_(const QString & errorMessage)
 {
     QString time = getCurrentTime();
     compileOutput_ += time + ": Compilation failed: " + errorMessage + "\n";
-    status_ = Status::CompileError;
+    setStatus_(Status::CompileError);
     emit compileFinished(false);
 }
 
@@ -200,7 +200,7 @@ void TestRunner::compile()
     bool processing     = (s == Status::Compiling) || (s == Status::Running);
     if (notCompiledYet || (modified && !processing))
     {
-        status_ = Status::Compiling;
+         setStatus_(Status::Compiling);
         compileOutput_.clear();
         lastCompiled_ = lastModified;
 
@@ -366,7 +366,7 @@ void TestRunner::compile_onMakeFinished_(int exitCode, QProcess::ExitStatus /*ex
         compileOutput_ += time + ": The process \"" + process_->program() + "\" exited normally.\n";
 
         testBinPath_ = compileDir_.absoluteFilePath(testName_); // XXX TODO change this on Windows
-        status_ = Status::NotRunYet;
+        setStatus_(Status::NotRunYet);
         emit compileFinished(true);
     }
     else
@@ -392,7 +392,7 @@ void TestRunner::run_onCompileFinished_(bool success)
 
     if (success)
     {
-        status_ = Status::Running;
+        setStatus_(Status::Running);
 
         // -------- Run test --------
 
@@ -431,7 +431,7 @@ void TestRunner::run_onTestFinished_(int exitCode, QProcess::ExitStatus /*exitSt
         runOutput_ += time + ": The process \"" + process_->program() + "\" exited normally.\n";
         runOutput_ += time + ": Test passed :-)\n";
 
-        status_ = Status::Pass;
+        setStatus_(Status::Pass);
         emit runFinished(true);
     }
     else
@@ -442,7 +442,13 @@ void TestRunner::run_onTestFinished_(int exitCode, QProcess::ExitStatus /*exitSt
                 QString("\" exited with code %1.\n").arg(exitCode);
         runOutput_ += time + ": Test failed :-(\n";
 
-        status_ = Status::RunError;
+        setStatus_(Status::RunError);
         emit runFinished(false);
     }
+}
+
+void TestRunner::setStatus_(Status status)
+{
+    status_ = status;
+    emit statusChanged(status);
 }

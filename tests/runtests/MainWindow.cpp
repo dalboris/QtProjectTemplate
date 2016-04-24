@@ -1,22 +1,16 @@
 #include "MainWindow.h"
-#include "TestRunner.h"
-#include "TestsTreeWidget.h"
-#include "TestsTreeModel.h"
-#include "TestsTreeView.h"
+#include "TestTreeModel.h"
+#include "TestTreeView.h"
 
-#include <QPushButton>
 #include <QTextEdit>
-#include <QHBoxLayout>
 #include <QFontDatabase>
 #include <QSplitter>
 #include <QHeaderView>
 
-#include <QtDebug>
-
 namespace
 {
 
-// Thx to Kuba Ober! http://stackoverflow.com/questions/18896933/qt-qfont-selection-of-a-monospace-font-doesnt-work
+// Thx to Kuba Ober: http://stackoverflow.com/questions/18896933/qt-qfont-selection-of-a-monospace-font-doesnt-work
 bool isFixedPitch(const QFont & font)
 {
     const QFontInfo fi(font);
@@ -61,34 +55,17 @@ MainWindow::MainWindow()
     unitOutDir.cd("unit");
 
     // Unit tests tree
-    //unitTestsTreeWidget_ = new TestsTreeWidget(unitDir, unitOutDir);
-    unitTestsTreeModel_ = new TestsTreeModel(unitDir, unitOutDir);
-    TestsTreeView * unitTestsTreeView = new TestsTreeView();
-    unitTestsTreeView->setModel(unitTestsTreeModel_);
+    testTreeModel_ = new TestTreeModel(unitDir, unitOutDir, this);
+    TestTreeView * unitTestsTreeView = new TestTreeView();
+    unitTestsTreeView->setModel(testTreeModel_);
     unitTestsTreeView->header()->setDefaultAlignment(Qt::AlignCenter);
     unitTestsTreeView->header()->setStretchLastSection(false);
     unitTestsTreeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     unitTestsTreeView->header()->setSectionResizeMode(1, QHeaderView::Fixed);
     unitTestsTreeView->header()->setSectionResizeMode(2, QHeaderView::Fixed);
-    unitTestsTreeView->header()->resizeSection(1, 20);
+    unitTestsTreeView->header()->resizeSection(1, 16);
     unitTestsTreeView->header()->resizeSection(2, 100);
-    //unitTestsTreeView->header()->moveSection(0, 2);
 
-    unitTestsTreeView->setI
-
-    //unitTestsTreeView->setColumnSiWidth(1, 10);
-
-    /*
-
-    // Test runner
-    testRunner_ = new TestRunner(unitDir, unitOutDir, "tst_Bar.cpp", this);
-    connect(testRunner_, &TestRunner::compileFinished, this, &MainWindow::onCompileFinished_);
-    connect(testRunner_, &TestRunner::runFinished, this, &MainWindow::onRunFinished_);
-
-    // Buttons
-    compileButton_ = new QPushButton("Compile");
-    runButton_ = new QPushButton("Run");
-*/
     // Text Edit
     textDocument_.setDefaultFont(getMonospaceFont());
     textEdit_ = new QTextEdit();
@@ -102,12 +79,9 @@ MainWindow::MainWindow()
     splitter->setCollapsible(0, false);
     splitter->setCollapsible(1, false);
     setCentralWidget(splitter);
-
-    // Compile on click
-    //connect(compileButton_, &QPushButton::clicked, this, &MainWindow::onCompileButtonClicked_);
-    //connect(runButton_, &QPushButton::clicked, this, &MainWindow::onRunButtonClicked_);
 }
 
+/*
 void MainWindow::onCompileButtonClicked_()
 {
     textDocument_.setPlainText("");
@@ -129,3 +103,4 @@ void MainWindow::onRunFinished_()
 {
     textDocument_.setPlainText(testRunner_->output());
 }
+*/
