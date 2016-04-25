@@ -10,6 +10,7 @@ FileTestItem::FileTestItem(
 {
     testRunner_ = new TestRunner(dir, outDir, fileName, this);
     connect(testRunner_, &TestRunner::statusChanged, this, &FileTestItem::onStatusChanged_);
+    connect(testRunner_, &TestRunner::outputChanged, this, &FileTestItem::outputChanged);
 }
 
 QString FileTestItem::name() const
@@ -42,6 +43,21 @@ QString FileTestItem::status() const
     return "";
 }
 
+QString FileTestItem::output() const
+{
+    return testRunner_->output();
+}
+
+QString FileTestItem::compileOutput() const
+{
+    return testRunner_->compileOutput();
+}
+
+QString FileTestItem::runOutput() const
+{
+    return testRunner_->runOutput();
+}
+
 void FileTestItem::run()
 {
     testRunner_->run();
@@ -50,4 +66,5 @@ void FileTestItem::run()
 void FileTestItem::onStatusChanged_(TestRunner::Status /*status*/)
 {
     emit statusChanged(this);
+    emit outputChanged();
 }

@@ -18,7 +18,8 @@ SOURCES += \
     FileTestItem.cpp \
     TestItem.cpp \
     TestTreeModel.cpp \
-    TestTreeView.cpp
+    TestTreeView.cpp \
+    OutputWidget.cpp
 
 HEADERS += \
     MainWindow.h \
@@ -28,5 +29,6 @@ HEADERS += \
     FileTestItem.h \
     TestItem.h \
     TestTreeModel.h \
-    TestTreeView.h
+    TestTreeView.h \
+    OutputWidget.h
 

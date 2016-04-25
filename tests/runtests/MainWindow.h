@@ -2,10 +2,11 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QTextDocument>
 
 class TestTreeModel;
-class QTextEdit;
+class TestItem;
+class QModelIndex;
+class OutputWidget;
 
 class MainWindow: public QMainWindow
 {
@@ -14,11 +15,21 @@ class MainWindow: public QMainWindow
 public:
     MainWindow();
 
+private slots:
+    void onTestItemActivated_(const QModelIndex & index);
+    void onActiveItemOutputChanged_();
+
+private:
+    void updateOutput_();
+    void setActiveTestItem_(TestItem * item);
+
 private:
     TestTreeModel * testTreeModel_;
+    TestItem * activeTestItem_;
 
-    QTextDocument textDocument_;
-    QTextEdit * textEdit_;
+    OutputWidget * relevantOutputWidget_;
+    OutputWidget * compileOutputWidget_;
+    OutputWidget * runOutputWidget_;
 };
 
 #endif // MAINWINDOW_H

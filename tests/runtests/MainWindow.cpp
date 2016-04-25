@@ -1,42 +1,17 @@
 #include "MainWindow.h"
+#include "TestItem.h"
 #include "TestTreeModel.h"
 #include "TestTreeView.h"
+#include "OutputWidget.h"
 
-#include <QTextEdit>
-#include <QFontDatabase>
+#include <QTabWidget>
 #include <QSplitter>
 #include <QHeaderView>
 
-namespace
-{
-
-// Thx to Kuba Ober: http://stackoverflow.com/questions/18896933/qt-qfont-selection-of-a-monospace-font-doesnt-work
-bool isFixedPitch(const QFont & font)
-{
-    const QFontInfo fi(font);
-    return fi.fixedPitch();
-}
-
-QFont getMonospaceFont()
-{
-    QFont font("monospace");
-    font.setPixelSize(12);
-    if (isFixedPitch(font)) return font;
-    font.setStyleHint(QFont::Monospace);
-    if (isFixedPitch(font)) return font;
-    font.setStyleHint(QFont::TypeWriter);
-    if (isFixedPitch(font)) return font;
-    font.setFamily("courier");
-    if (isFixedPitch(font)) return font;
-    return font;
-}
-
-}
-
-MainWindow::MainWindow()
+MainWindow::MainWindow() :
+    activeTestItem_(nullptr)
 {
     // Get some directory for testing
-    // Later, these would would specified on the command line or via the interface
     QDir rootDir = QDir(QMAKE_PWD);
     while (rootDir.dirName() != "tests") // different number of cdUp() on Windows and Unix
         rootDir.cdUp();
@@ -56,29 +31,79 @@ MainWindow::MainWindow()
 
     // Unit tests tree
     testTreeModel_ = new TestTreeModel(unitDir, unitOutDir, this);
-    TestTreeView * unitTestsTreeView = new TestTreeView();
-    unitTestsTreeView->setModel(testTreeModel_);
-    unitTestsTreeView->header()->setDefaultAlignment(Qt::AlignCenter);
-    unitTestsTreeView->header()->setStretchLastSection(false);
-    unitTestsTreeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
-    unitTestsTreeView->header()->setSectionResizeMode(1, QHeaderView::Fixed);
-    unitTestsTreeView->header()->setSectionResizeMode(2, QHeaderView::Fixed);
-    unitTestsTreeView->header()->resizeSection(1, 16);
-    unitTestsTreeView->header()->resizeSection(2, 100);
+    TestTreeView * testTreeView = new TestTreeView();
+    testTreeView->setModel(testTreeModel_);
+    testTreeView->header()->setDefaultAlignment(Qt::AlignCenter);
+    testTreeView->header()->setStretchLastSection(false);
+    testTreeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    testTreeView->header()->setSectionResizeMode(1, QHeaderView::Fixed);
+    testTreeView->header()->setSectionResizeMode(2, QHeaderView::Fixed);
+    testTreeView->header()->resizeSection(1, 16);
+    testTreeView->header()->resizeSection(2, 100);
+    connect(testTreeView, &TestTreeView::activated, this, &MainWindow::onTestItemActivated_);
+
+    // Output widgets
+    relevantOutputWidget_ = new OutputWidget();
+    compileOutputWidget_ = new OutputWidget();
+    runOutputWidget_ = new OutputWidget();
+    QTabWidget * outputWidgets = new QTabWidget();
+    outputWidgets->addTab(relevantOutputWidget_, "Relevant Output");
+    outputWidgets->addTab(compileOutputWidget_, "Compile Output");
+    outputWidgets->addTab(runOutputWidget_, "Run Output");
 
     // Text Edit
-    textDocument_.setDefaultFont(getMonospaceFont());
-    textEdit_ = new QTextEdit();
-    textEdit_->setDocument(&textDocument_);
-    textEdit_->setReadOnly(true);
-
     QSplitter * splitter = new QSplitter();
-    //splitter->addWidget(unitTestsTreeWidget_);
-    splitter->addWidget(unitTestsTreeView);
-    splitter->addWidget(textEdit_);
+    splitter->addWidget(testTreeView);
+    splitter->addWidget(outputWidgets);
     splitter->setCollapsible(0, false);
     splitter->setCollapsible(1, false);
     setCentralWidget(splitter);
+}
+
+void MainWindow::onTestItemActivated_(const QModelIndex & index)
+{
+    if (index.isValid())
+        setActiveTestItem_(static_cast<TestItem*>(index.internalPointer()));
+    else
+        setActiveTestItem_(nullptr);
+}
+
+void MainWindow::setActiveTestItem_(TestItem * item)
+{
+    if (item != activeTestItem_)
+    {
+        if (activeTestItem_)
+            activeTestItem_->disconnect(this);
+
+        activeTestItem_ = item;
+
+        if (activeTestItem_)
+            connect(activeTestItem_, &TestItem::outputChanged,
+                    this, &MainWindow::onActiveItemOutputChanged_);
+
+        updateOutput_();
+    }
+}
+
+void MainWindow::onActiveItemOutputChanged_()
+{
+    updateOutput_();
+}
+
+void MainWindow::updateOutput_()
+{
+    if (activeTestItem_)
+    {
+        relevantOutputWidget_->setOutput(activeTestItem_->output());
+        compileOutputWidget_->setOutput(activeTestItem_->compileOutput());
+        runOutputWidget_->setOutput(activeTestItem_->runOutput());
+    }
+    else
+    {
+        relevantOutputWidget_->setOutput("");
+        compileOutputWidget_->setOutput("");
+        runOutputWidget_->setOutput("");
+    }
 }
 
 /*

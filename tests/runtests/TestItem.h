@@ -43,12 +43,18 @@ public:
     virtual QString name() const=0;
     virtual QString status() const=0;
 
+    // Output
+    virtual QString output() const=0;
+    virtual QString compileOutput() const=0;
+    virtual QString runOutput() const=0;
+
 public slots:
     // Run test
     virtual void run()=0;
 
 signals:
     void statusChanged(TestItem * item);
+    void outputChanged();
 
 protected:
     void appendChildItem(TestItem * childItem);

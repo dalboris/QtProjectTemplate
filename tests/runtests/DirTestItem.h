@@ -13,6 +13,11 @@ public:
 
     virtual QString name() const;
     virtual QString status() const;
+
+    virtual QString output() const;
+    virtual QString compileOutput() const;
+    virtual QString runOutput() const;
+
     virtual void run();
 
 private:

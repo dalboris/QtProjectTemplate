@@ -57,6 +57,21 @@ QString DirTestItem::status() const
     return "";
 }
 
+QString DirTestItem::output() const
+{
+    return "";
+}
+
+QString DirTestItem::compileOutput() const
+{
+    return "";
+}
+
+QString DirTestItem::runOutput() const
+{
+    return "";
+}
+
 void DirTestItem::run()
 {
     for (int i=0; i<numChildItems(); ++i)

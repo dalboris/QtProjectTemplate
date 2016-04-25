@@ -108,11 +108,17 @@ signals:
     ///
     void statusChanged(Status status);
 
+    /// Signal emitted each time there is new content in the output
+    ///
+    void outputChanged();
+
 private slots:
     void compile_onQmakeFinished_(int exitCode, QProcess::ExitStatus exitStatus);
     void compile_onMakeFinished_(int exitCode, QProcess::ExitStatus exitStatus);
     void run_onCompileFinished_(bool success);
     void run_onTestFinished_(int exitCode, QProcess::ExitStatus exitStatus);
+
+    void onReadyReadStandardOutput_();
 
 private:
     void setStatus_(Status status);

@@ -129,6 +129,9 @@ TestRunner::TestRunner(const QDir & inDir,
     testName_ = fileInfo.baseName();
 
     process_ = new QProcess(this);
+    process_->setReadChannel(QProcess::StandardOutput);
+    process_->setReadChannelMode(QProcess::MergedChannels);
+    connect(process_, &QProcess::readyReadStandardOutput, this, &TestRunner::onReadyReadStandardOutput_);
 }
 
 QString TestRunner::testName() const
@@ -314,7 +317,10 @@ void TestRunner::compile()
 
 void TestRunner::compile_onQmakeFinished_(int exitCode, QProcess::ExitStatus /*exitStatus*/)
 {
-    process_->disconnect();
+    disconnect(process_,
+            static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
+            this,
+            &TestRunner::compile_onQmakeFinished_);
 
     compileOutput_ += process_->readAll();
     if (exitCode == 0)
@@ -357,7 +363,10 @@ void TestRunner::compile_onQmakeFinished_(int exitCode, QProcess::ExitStatus /*e
 
 void TestRunner::compile_onMakeFinished_(int exitCode, QProcess::ExitStatus /*exitStatus*/)
 {
-    process_->disconnect();
+    disconnect(process_,
+            static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
+            this,
+            &TestRunner::compile_onMakeFinished_);
 
     compileOutput_ += process_->readAll();
     if (exitCode == 0)
@@ -421,7 +430,10 @@ void TestRunner::run_onCompileFinished_(bool success)
 
 void TestRunner::run_onTestFinished_(int exitCode, QProcess::ExitStatus /*exitStatus*/)
 {
-    process_->disconnect();
+    disconnect(process_,
+            static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
+            this,
+            &TestRunner::run_onTestFinished_);
 
     runOutput_ += process_->readAll();
 
@@ -451,4 +463,25 @@ void TestRunner::setStatus_(Status status)
 {
     status_ = status;
     emit statusChanged(status);
+}
+
+void TestRunner::onReadyReadStandardOutput_()
+{
+    switch (status())
+    {
+    case Status::NotCompiledYet:
+    case Status::Compiling:
+    case Status::CompileError:
+        compileOutput_ += process_->readAll();
+        break;
+
+    case Status::NotRunYet:
+    case Status::Running:
+    case Status::RunError:
+    case Status::Pass:
+        runOutput_ += process_->readAll();
+        break;
+    }
+
+    emit outputChanged();
 }
