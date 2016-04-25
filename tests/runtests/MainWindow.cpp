@@ -58,6 +58,11 @@ MainWindow::MainWindow() :
     splitter->setCollapsible(0, false);
     splitter->setCollapsible(1, false);
     setCentralWidget(splitter);
+
+    // More sensible default sizes and proportions
+    resize(1200, 650);
+    splitter->setStretchFactor(0,1);
+    splitter->setStretchFactor(1,3);
 }
 
 void MainWindow::onTestItemActivated_(const QModelIndex & index)
