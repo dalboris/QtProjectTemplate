@@ -19,7 +19,9 @@ SOURCES += \
     TestItem.cpp \
     TestTreeModel.cpp \
     TestTreeView.cpp \
-    OutputWidget.cpp
+    OutputWidget.cpp \
+    RunButton.cpp \
+    TestTreeSelectionModel.cpp
 
 HEADERS += \
     MainWindow.h \
@@ -30,5 +32,7 @@ HEADERS += \
     TestItem.h \
     TestTreeModel.h \
     TestTreeView.h \
-    OutputWidget.h
+    OutputWidget.h \
+    RunButton.h \
+    TestTreeSelectionModel.h
 

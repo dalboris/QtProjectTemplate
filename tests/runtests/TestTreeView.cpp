@@ -1,26 +1,47 @@
 #include "TestTreeView.h"
+#include "TestTreeModel.h"
 #include "TestItem.h"
+#include "RunButton.h"
 
-#include <QPushButton>
+#include <cassert>
 
-TestTreeView::TestTreeView(QWidget *parent) :
-    QTreeView(parent)
+TestTreeView::TestTreeView(QWidget * parent) :
+    QTreeView(parent),
+    testTreeModel_(nullptr)
 {
-
+    setSelectionMode(QAbstractItemView::SingleSelection);
+    setSelectionBehavior(QAbstractItemView::SelectItems);
 }
 
 void TestTreeView::setModel(QAbstractItemModel * model)
 {
-    QTreeView::setModel(model);
-    makeRunButtonsOfChildren_();
+    // Ensure we have a non-null TestTreeModel
+    testTreeModel_ = dynamic_cast<TestTreeModel*>(model);
+    assert(testTreeModel_);
+
+    // Set model
+    QTreeView::setModel(testTreeModel_);
+
+    // Make run buttons
+    makeRunButtons_();
+
+    // Make root item current
+    setCurrentIndex(model->index(0, 0));
 }
 
-QModelIndex TestTreeView::firstChild_(const QModelIndex & parentIndex)
+TestTreeModel * TestTreeView::testTreeModel() const
 {
-    if (model())
-        return model()->index(0, 0, parentIndex);
-    else
-        return QModelIndex();
+    return testTreeModel_;
+}
+
+void TestTreeView::onRunButtonClicked_(TestItem * item)
+{
+    setCurrentIndex(testTreeModel()->indexFromItem(item));
+}
+
+QModelIndex TestTreeView::firstChild_(const QModelIndex & index)
+{
+    return model()->index(0, 0, index);
 }
 
 QModelIndex TestTreeView::nextSibling_(const QModelIndex & index)
@@ -28,33 +49,30 @@ QModelIndex TestTreeView::nextSibling_(const QModelIndex & index)
     return index.sibling(index.row()+1, 0);
 }
 
+void TestTreeView::makeRunButtons_()
+{
+    QModelIndex rootIndex;
+    makeRunButtonsOfChildren_(rootIndex);
+}
+
 void TestTreeView::makeRunButtonsOfChildren_(const QModelIndex & parentIndex)
 {
-    if (!model())
-        return;
-
     for(QModelIndex index = firstChild_(parentIndex);
         index.isValid();
         index = nextSibling_(index))
     {
-        // Create QPushButton
-        QPushButton * button = new QPushButton();
-        button->setMinimumSize(16, 16);
-        button->setMaximumSize(16, 16);
-        button->setIcon(QIcon(":/runicon.png"));
-        button->setFlat(true);
-        button->setStyleSheet(
-                    "QPushButton {border: none}"
-                    "QPushButton:hover:!pressed {background-color: rgba(150,150,150, 0.3);}"
-                    "QPushButton:hover:pressed  {background-color: rgba(150,150,150, 0.6);}");
+        // Get item corresponding to index
+        TestItem * item =  testTreeModel()->itemFromIndex(index);
 
-        // Connect to run function
-        TestItem * item = static_cast<TestItem*>(index.internalPointer());
-        connect(button, &QPushButton::clicked, item, &TestItem::run);
+        // Create run button for item
+        RunButton * runButton = new RunButton(item);
+
+        // Make item current when run button clicked
+        connect(runButton, &RunButton::runClicked, this, &TestTreeView::onRunButtonClicked_);
 
         // Insert in View
-        QModelIndex buttonIndex = index.sibling(index.row(), 1);
-        setIndexWidget(buttonIndex, button);
+        QModelIndex runButtonIndex = index.sibling(index.row(), 1);
+        setIndexWidget(runButtonIndex, runButton);
 
         // Recurse on children
         makeRunButtonsOfChildren_(index);

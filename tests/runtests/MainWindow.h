@@ -3,9 +3,10 @@
 
 #include <QMainWindow>
 
-class TestTreeModel;
 class TestItem;
-class QModelIndex;
+class TestTreeModel;
+class TestTreeSelectionModel;
+class TestTreeView;
 class OutputWidget;
 
 class MainWindow: public QMainWindow
@@ -16,16 +17,15 @@ public:
     MainWindow();
 
 private slots:
-    void onTestItemActivated_(const QModelIndex & index);
-    void onActiveItemOutputChanged_();
+    void onCurrentTestItemChanged_(TestItem * current, TestItem * previous);
 
 private:
     void updateOutput_();
-    void setActiveTestItem_(TestItem * item);
 
 private:
     TestTreeModel * testTreeModel_;
-    TestItem * activeTestItem_;
+    TestTreeSelectionModel * testTreeSelectionModel_;
+    TestTreeView * testTreeView_;
 
     OutputWidget * relevantOutputWidget_;
     OutputWidget * compileOutputWidget_;

@@ -15,6 +15,9 @@ public:
                   const QDir & outDir,
                   QObject * parent = nullptr);
 
+    QModelIndex indexFromItem(TestItem * item, int column = 0) const;
+    TestItem * itemFromIndex(const QModelIndex & index) const;
+
     QVariant data(const QModelIndex & index, int role) const Q_DECL_OVERRIDE;
     Qt::ItemFlags flags(const QModelIndex & index) const Q_DECL_OVERRIDE;
     QVariant headerData(int section, Qt::Orientation orientation,

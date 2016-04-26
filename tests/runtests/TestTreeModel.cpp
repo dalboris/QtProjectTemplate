@@ -16,6 +16,30 @@ TestTreeModel::TestTreeModel(
     connectItemSignalsToModelSignals_(rootItem_);
 }
 
+QModelIndex TestTreeModel::indexFromItem(TestItem * item, int column) const
+{
+    if (item)
+    {
+        return createIndex(item->row(), column, item);
+    }
+    else
+    {
+        return QModelIndex();
+    }
+}
+
+TestItem * TestTreeModel::itemFromIndex(const QModelIndex & index) const
+{
+    if (index.isValid())
+    {
+        return static_cast<TestItem*>(index.internalPointer());
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
 QModelIndex TestTreeModel::index(int row, int column, const QModelIndex & parent) const
 {
     if (!hasIndex(row, column, parent))
@@ -23,11 +47,11 @@ QModelIndex TestTreeModel::index(int row, int column, const QModelIndex & parent
 
     if (!parent.isValid())
     {
-        return createIndex(row, column, rootItem_);
+        return  createIndex(row, column, rootItem_);
     }
     else
     {
-        TestItem * parentItem = static_cast<TestItem*>(parent.internalPointer());
+        TestItem * parentItem = itemFromIndex(parent);
         if (0 <= row && row < parentItem->numChildItems())
         {
             TestItem * childItem = parentItem->childItem(row);
@@ -42,20 +66,9 @@ QModelIndex TestTreeModel::index(int row, int column, const QModelIndex & parent
 
 QModelIndex TestTreeModel::parent(const QModelIndex & index) const
 {
-    if (!index.isValid())
-        return QModelIndex();
-
-    TestItem * childItem = static_cast<TestItem*>(index.internalPointer());
-    TestItem * parentItem = childItem->parentItem();
-
-    if (parentItem)
-    {
-        return createIndex(parentItem->row(), 0, parentItem);
-    }
-    else
-    {
-        return QModelIndex();
-    }
+    TestItem * item = itemFromIndex(index);
+    TestItem * parentItem = item ? item->parentItem() : nullptr;
+    return indexFromItem(parentItem, 0);
 }
 
 int TestTreeModel::rowCount(const QModelIndex & parent) const
@@ -81,7 +94,8 @@ int TestTreeModel::columnCount(const QModelIndex & /*parent*/) const
 
 QVariant TestTreeModel::data(const QModelIndex & index, int role) const
 {
-    if (!index.isValid())
+    TestItem * item = itemFromIndex(index);
+    if (!item)
         return QVariant();
 
     if (role == Qt::TextAlignmentRole)
@@ -94,8 +108,6 @@ QVariant TestTreeModel::data(const QModelIndex & index, int role) const
 
     if (role != Qt::DisplayRole)
         return QVariant();
-
-    TestItem * item = static_cast<TestItem*>(index.internalPointer());
 
     if (index.column() == 0)
         return item->name();
