@@ -30,6 +30,17 @@ class TestItem: public QObject
     Q_OBJECT
 
 public:
+    // Status enumeration
+    enum class Status
+    {
+        None,
+        Running,
+        Pass,
+        Fail,
+        FailButStillRunning
+    };
+
+    // Constructor and virtual destructor
     TestItem(QObject * parent = nullptr);
     virtual ~TestItem()=0;
 
@@ -39,11 +50,19 @@ public:
     int numChildItems() const;
     int row() const;
 
-    // Data
-    virtual QString name() const=0;
-    virtual QString status() const=0;
+    // Status data.
+    // progress() returns how much "run" has progressed between 0.0 and 1.0. Examples:
+    //     - 0.0: run hasn't started, or has just started. Status == None or Running.
+    //     - 0.5: run in progress, halfway through. Status == Running.
+    //     - 1.0: run has finished. Status == Pass or Fail.
+    Status status() const;
+    double progress() const;
 
-    // Output
+    // Tree view data
+    virtual QString name() const=0;
+    virtual QString statusText() const=0;
+
+    // Output data
     virtual QString output() const=0;
     virtual QString compileOutput() const=0;
     virtual QString runOutput() const=0;
@@ -53,16 +72,36 @@ public slots:
     virtual void run()=0;
 
 signals:
+    // These signals are automatically emitted by the protected setters
     void statusChanged(TestItem * item);
-    void outputChanged();
+    void progressChanged(TestItem * item);
+
+    // These signals must be emitted by derived classes when implementing
+    // virtual functions.
+    void runStarted(TestItem * item);
+    void runFinished(TestItem * item);
+    void statusTextChanged(TestItem * item);
+    void outputChanged(TestItem * item);
 
 protected:
+    // Append a child item to this item.
     void appendChildItem(TestItem * childItem);
 
+    // Changes status to \p status, and emits statusChanged()
+    void setStatus(Status status);
+
+    // Changes progress to \p progress, and emits progressChanged()
+    void setProgress(double progress);
+
 private:
+    // Parent-child hierarchy
     TestItem * parentItem_;
     QList<TestItem*> childItems_;
     int row_;
+
+    // Status data
+    Status status_;
+    double progress_;
 };
 
 #endif // TESTSTREEITEM_H

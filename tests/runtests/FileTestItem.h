@@ -17,7 +17,7 @@ public:
                  QObject * parent = nullptr);
 
     virtual QString name() const;
-    virtual QString status() const;
+    virtual QString statusText() const;
 
     virtual QString output() const;
     virtual QString compileOutput() const;
@@ -26,7 +26,9 @@ public:
     virtual void run();
 
 private slots:
-    void onStatusChanged_(TestRunner::Status status);
+    void onOutputChanged_();
+    void onStatusChanged_(TestRunner::Status statusText);
+    void onRunFinished_(bool success);
 
 private:
     TestRunner * testRunner_;

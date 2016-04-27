@@ -112,7 +112,7 @@ QVariant TestTreeModel::data(const QModelIndex & index, int role) const
     if (index.column() == 0)
         return item->name();
     else if (index.column() == 2)
-        return item->status();
+        return item->statusText();
     else
         return QVariant();
 }
@@ -145,7 +145,9 @@ QVariant TestTreeModel::headerData(int section, Qt::Orientation orientation,
 
 void TestTreeModel::connectItemSignalsToModelSignals_(const TestItem * item)
 {
+    connect(item, &TestItem::progressChanged, this, &TestTreeModel::onStatusChanged_);
     connect(item, &TestItem::statusChanged, this, &TestTreeModel::onStatusChanged_);
+    connect(item, &TestItem::statusTextChanged, this, &TestTreeModel::onStatusChanged_);
     for (int i=0; i<item->numChildItems(); ++i)
     {
         connectItemSignalsToModelSignals_(item->childItem(i));

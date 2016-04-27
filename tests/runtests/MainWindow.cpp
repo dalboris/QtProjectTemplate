@@ -8,7 +8,6 @@
 
 #include <QTabWidget>
 #include <QSplitter>
-#include <QHeaderView>
 
 MainWindow::MainWindow()
 {
@@ -47,15 +46,6 @@ MainWindow::MainWindow()
     testTreeView_->setModel(testTreeModel_);
     testTreeView_->setSelectionModel(testTreeSelectionModel_);
 
-    // XXX this should be done in the constructor of TestTreeView
-    testTreeView_->header()->setDefaultAlignment(Qt::AlignCenter);
-    testTreeView_->header()->setStretchLastSection(false);
-    testTreeView_->header()->setSectionResizeMode(0, QHeaderView::Stretch);
-    testTreeView_->header()->setSectionResizeMode(1, QHeaderView::Fixed);
-    testTreeView_->header()->setSectionResizeMode(2, QHeaderView::Fixed);
-    testTreeView_->header()->resizeSection(1, 16);
-    testTreeView_->header()->resizeSection(2, 100);
-
     // Output widgets
     relevantOutputWidget_ = new OutputWidget();
     compileOutputWidget_ = new OutputWidget();
@@ -83,7 +73,7 @@ MainWindow::MainWindow()
     // Set sensible sizes and proportions
     resize(1200, 650);
     splitter->setStretchFactor(0,1);
-    splitter->setStretchFactor(1,3);
+    splitter->setStretchFactor(1,2);
 }
 
 void MainWindow::onCurrentTestItemChanged_(TestItem * current, TestItem * previous)

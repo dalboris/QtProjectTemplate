@@ -18,4 +18,5 @@ INCLUDEPATH += ../testlib/
 # List of all unit tests
 SOURCES += \
     tst_Foo.cpp \
-    tst_Bar.cpp
+    tst_Bar.cpp \
+    Core/tst_Foo.cpp

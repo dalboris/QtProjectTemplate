@@ -3,14 +3,19 @@
 #include "TestItem.h"
 #include "RunButton.h"
 
+#include <QHeaderView>
 #include <cassert>
 
 TestTreeView::TestTreeView(QWidget * parent) :
     QTreeView(parent),
     testTreeModel_(nullptr)
 {
+    // Set selection mode and behavior
     setSelectionMode(QAbstractItemView::SingleSelection);
     setSelectionBehavior(QAbstractItemView::SelectItems);
+
+    // Set style
+    //setAlternatingRowColors(true);
 }
 
 void TestTreeView::setModel(QAbstractItemModel * model)
@@ -27,6 +32,15 @@ void TestTreeView::setModel(QAbstractItemModel * model)
 
     // Make root item current
     setCurrentIndex(model->index(0, 0));
+
+    // Set header style and column widths
+    header()->setDefaultAlignment(Qt::AlignCenter);
+    header()->setStretchLastSection(false);
+    header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    header()->setSectionResizeMode(1, QHeaderView::Fixed);
+    header()->setSectionResizeMode(2, QHeaderView::Fixed);
+    header()->resizeSection(1, 16);
+    header()->resizeSection(2, 150);
 }
 
 TestTreeModel * TestTreeView::testTreeModel() const
