@@ -8,7 +8,7 @@ TEMPLATE = lib
 CONFIG += staticlib
 QT += testlib widgets
 
-# Add src/third/ andsrc/libs/ to INCLUDEPATH
+# Add src/third/ and src/libs/ to INCLUDEPATH
 INCLUDEPATH += ../../src/third/
 INCLUDEPATH += ../../src/libs/
 
