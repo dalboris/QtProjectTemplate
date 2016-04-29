@@ -25,7 +25,9 @@ SOURCES += \
     RunButton.cpp \
     TestTreeSelectionModel.cpp \
     DependsUtils.cpp \
-    ConfigUtils.cpp
+    ConfigUtils.cpp \
+    CommandLineApplication.cpp \
+    GuiApplication.cpp
 
 HEADERS += \
     MainWindow.h \
@@ -40,5 +42,7 @@ HEADERS += \
     RunButton.h \
     TestTreeSelectionModel.h \
     DependsUtils.h \
-    ConfigUtils.h
+    ConfigUtils.h \
+    CommandLineApplication.h \
+    GuiApplication.h
 
