@@ -243,21 +243,31 @@ QStringList DependsUtils::getQMakeVariable(
         res = qmakeStringToList_(matched);
     }
 
-    // XXX TODO
+    // Add all '+=' found
+    while (iPlusEqual.hasNext())
+    {
+        QRegularExpressionMatch match = iPlusEqual.next();
+        QString matched = match.captured(1);
+        res.append(qmakeStringToList_(matched));
+    }
 
-    /*
+    // Remove all '-=' found
+    while (iMinusEqual.hasNext())
+    {
+        QRegularExpressionMatch match = iMinusEqual.next();
+        QString matched = match.captured(1);
+        QStringList strings = qmakeStringToList_(matched);
+        QStringList newRes;
+        for (int i=0; i<res.size(); ++i)
+        {
+            if (!strings.contains(res[i]))
+            {
+                newRes.append(res[i]);
+            }
+        }
+        res.swap(newRes);
+    }
 
-    # Add all '+=' found
-    for match in matchPlusEqual:
-        string = match[0]
-        values.extend(qmakeStringToList(string))
-
-    # Remove all '-=' found
-    for match in matchMinusEqual:
-        string = match[0]
-        strings = qmakeStringToList(string)
-        values = [ s for s in values if (s not in strings) ]
-        */
-
+    // Return
     return res;
 }
