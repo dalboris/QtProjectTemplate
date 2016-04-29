@@ -1,4 +1,7 @@
 #include "TestRunner.h"
+#include "DirUtils.h"
+#include "DependsUtils.h"
+#include "ConfigUtils.h"
 
 #include <QFile>
 #include <QDateTime>
@@ -61,7 +64,7 @@ QString generateH(const QString & testName, const QString & testSource)
     return out;
 }
 
-QString generateCpp(const QString & testName)
+QString generateCpp(const QString & testName, const QString & /*testSource*/)
 {
     // Template string
     QString out =
@@ -85,19 +88,102 @@ QString generateCpp(const QString & testName)
     return out;
 }
 
-QString generatePro(const QString & testName)
+QString generatePro(const QString & testName, const QString & testSource)
 {
-    // Template string
+    // -------- Basic project configuration --------
+
     QString out =
             "TEMPLATE = app\n"
             "CONFIG += c++11\n"
-            "QT += widgets testlib\n" // XXX TODO: widgets should only be for QApplication
-            "\n" // XXX TODO: Add library dependencies here
+            "QT += widgets testlib\n"
+            "\n"
             "HEADERS += %testName.gen.h\n"
             "SOURCES += %testName.gen.cpp\n";
 
-    // Replace placeholders in template
     out.replace("%testName", testName);
+
+
+    // -------- Add include paths --------
+
+    QString includePathTemplate;
+    if (ConfigUtils::isWin32())
+    {
+        includePathTemplate =
+                "\n"
+                "INCLUDEPATH += %thirdDir/\n"
+                "INCLUDEPATH += %libsDir/\n";
+    }
+    else // unix
+    {
+        includePathTemplate =
+                "\n"
+                "INCLUDEPATH += %thirdDir/\n"
+                "INCLUDEPATH += %libsDir/\n"
+                "QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_ISYSTEM %thirdDir/\n";
+    }
+
+    includePathTemplate
+            .replace("%thirdDir", DirUtils::dir("src/third").absolutePath())
+            .replace("%libsDir",  DirUtils::dir("src/libs").absolutePath());
+
+    out += includePathTemplate;
+
+
+    // -------- Add library dependencies --------
+
+    QString libDependencyTemplate;
+    if (ConfigUtils::isWin32())
+    {
+        libDependencyTemplate =
+                "\n"
+                "LIBS += -L%libOutDir/%releaseOrDebug/ -l%libName\n"
+                "PRE_TARGETDEPS += %libOutDir/%releaseOrDebug/%libName.lib\n";
+
+        libDependencyTemplate.replace("%releaseOrDebug", ConfigUtils::releaseOrDebug());
+    }
+    else // unix
+    {
+        libDependencyTemplate =
+                "\n"
+                "LIBS += -L%libOutDir/ -l%libName\n"
+                "PRE_TARGETDEPS += %libOutDir/lib%libName.a\n";
+    }
+
+    // Analyse dependencies
+    DependsUtils::SDepends sdepends = DependsUtils::getSourceSDepends(testSource);
+
+    // Add qt dependencies
+    out += "\nQT += " + sdepends.qt.join(" ") + "\n";
+
+    // Add third dependencies
+    for (int i = sdepends.lib.size()-1; i >= 0; --i)
+    {
+        QString libRelPath = "src/libs/" + sdepends.lib[i];
+        QString libOutDir = DirUtils::outDir(libRelPath).absolutePath();
+        QString libName = libRelPath.split('/').last();
+
+        QString libDependency = libDependencyTemplate;
+        libDependency
+                .replace("%libOutDir", libOutDir)
+                .replace("%libName",   libName);
+
+        out += libDependency;
+    }
+
+    // Add libs dependencies
+    for (int i = sdepends.third.size()-1; i >= 0; --i)
+    {
+        QString libRelPath = "src/third/" + sdepends.third[i];
+        QString libOutDir = DirUtils::outDir(libRelPath).absolutePath();
+        QString libName = libRelPath.split('/').last();
+
+        QString libDependency = libDependencyTemplate;
+        libDependency
+                .replace("%libOutDir", libOutDir)
+                .replace("%libName",   libName);
+
+        out += libDependency;
+    }
 
     // Return generated tst_Foo.gen.pro
     return out;
@@ -284,8 +370,8 @@ void TestRunner::compile()
         QTextStream proStream(&proFile);
 
         hStream   << generateH(testName_, testSource);
-        cppStream << generateCpp(testName_);
-        proStream << generatePro(testName_);
+        cppStream << generateCpp(testName_, testSource);
+        proStream << generatePro(testName_, testSource);
 
 
         // -------- Run qmake --------

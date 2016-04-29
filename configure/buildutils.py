@@ -208,7 +208,7 @@ def getQmakeVariable(variableName, inputConfig, initialValues=[]):
         string = match[0]
         values.extend(qmakeStringToList(string))
 
-    # Remove all '+=' found
+    # Remove all '-=' found
     for match in matchMinusEqual:
         string = match[0]
         strings = qmakeStringToList(string)

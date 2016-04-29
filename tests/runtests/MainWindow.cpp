@@ -11,27 +11,13 @@
 
 MainWindow::MainWindow()
 {
-    // Get root directory
-    // Note: num of cdUp() depends on win32/unix
-    QDir rootDir = QDir(QMAKE_PWD);
-    while (rootDir.dirName() != "tests")
-        rootDir.cdUp();
-    rootDir.cdUp();
-
     // Get root/tests/unit directory
-    QDir unitDir = rootDir;
+    QDir unitDir = DirUtils::rootDir();
     DirUtils::cd(unitDir, "tests");
     DirUtils::cd(unitDir, "unit");
 
-    // Get root out directory
-    // Note: num of cdUp() depends on win32/unix
-    QDir rootOutDir = QDir(QMAKE_OUT_PWD);
-    while (rootOutDir.dirName() != "tests")
-        rootOutDir.cdUp();
-    rootOutDir.cdUp();
-
     // Get root/tests/unit out directory
-    QDir unitOutDir = rootOutDir;
+    QDir unitOutDir = DirUtils::rootOutDir();
     DirUtils::cd(unitOutDir, "tests");
     DirUtils::cd(unitOutDir, "unit");
 

@@ -2,22 +2,23 @@
 
 #include <QMessageBox>
 
-bool DirUtils::cd(QDir & dir, QString name)
+bool DirUtils::cd(QDir & dir, QString relPath)
 {
-    DirUtils::mkdir(dir, name);
+    QStringList names = relPath.split('/');
+    foreach (QString name, names)
+    {
+        DirUtils::mkdir(dir, name);
 
-    if (dir.cd(name))
-    {
-        return true;
+        if (!dir.cd(name))
+        {
+            QMessageBox::critical(
+                        0, "Error moving to directory",
+                        QString("Failed to move to directory %1")
+                        .arg(dir.absoluteFilePath(name)));
+            return false;
+        }
     }
-    else
-    {
-        QMessageBox::critical(
-                0, "Error moving to directory",
-                QString("Failed to move to directory %1")
-                    .arg(dir.absoluteFilePath(name)));
-        return false;
-    }
+    return true;
 }
 
 bool DirUtils::mkdir(QDir & dir, QString name)
@@ -41,4 +42,38 @@ bool DirUtils::mkdir(QDir & dir, QString name)
             return false;
         }
     }
+}
+
+QDir DirUtils::rootDir()
+{
+    // Note: num of cdUp() depends on win32/unix
+    QDir res = QDir(QMAKE_PWD);
+    while (res.dirName() != "tests")
+        res.cdUp();
+    res.cdUp();
+    return res;
+}
+
+QDir DirUtils::rootOutDir()
+{
+    // Note: num of cdUp() depends on win32/unix
+    QDir res = QDir(QMAKE_OUT_PWD);
+    while (res.dirName() != "tests")
+        res.cdUp();
+    res.cdUp();
+    return res;
+}
+
+QDir DirUtils::dir(const QString & relPath)
+{
+    QDir res = rootDir();
+    cd(res, relPath);
+    return res;
+}
+
+QDir DirUtils::outDir(const QString & relPath)
+{
+    QDir res = rootOutDir();
+    cd(res, relPath);
+    return res;
 }

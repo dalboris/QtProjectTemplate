@@ -7,6 +7,8 @@ DEFINES += QMAKE_OUT_PWD=\\\"$$OUT_PWD\\\"
 DEFINES += QMAKE_QMAKE_QMAKE=\\\"$$QMAKE_QMAKE\\\"
 DEFINES += QMAKE_QMAKESPEC=\\\"$$QMAKESPEC\\\"
 
+DEFINES += QMAKE_CONFIG=\\\"$$(CONFIG)\\\"
+
 RESOURCES += resources.qrc
 
 SOURCES += \
@@ -21,7 +23,9 @@ SOURCES += \
     TestTreeView.cpp \
     OutputWidget.cpp \
     RunButton.cpp \
-    TestTreeSelectionModel.cpp
+    TestTreeSelectionModel.cpp \
+    DependsUtils.cpp \
+    ConfigUtils.cpp
 
 HEADERS += \
     MainWindow.h \
@@ -34,5 +38,7 @@ HEADERS += \
     TestTreeView.h \
     OutputWidget.h \
     RunButton.h \
-    TestTreeSelectionModel.h
+    TestTreeSelectionModel.h \
+    DependsUtils.h \
+    ConfigUtils.h
 
