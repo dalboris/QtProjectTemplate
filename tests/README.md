@@ -104,35 +104,70 @@ END_TESTS
 ```
 
 
-# How to compile and run tests:
+# How to run tests?
 
-Just run the 'runtests' program, either interactively or with the command-line.
+Let's assume you compiled the distribution this way:
 
-The command-line version takes one parameter: the path to the test file or the
-test folder you want to compile and run. 
+```shell
+$ git clone https://github.com/dalboris/QtProjectTemplate.git QtProjectTemplate
+$ mkdir build-QtProjectTemplate
+$ cd build-QtProjectTemplate
+$ qmake ../QtProjectTemplate
+$ make
+```
+(note: `qmake` may have to be replaced by something like `/home/boris/Qt/5.5/gcc_64/bin/qmake` to specify which version of qmake, and therefore Qt, to use)
 
-The interactive version is a Gui to let you graphically select which test
-file or folder to compile and run
+Then in the build directory, you will find an application called `runtests` in the `tests/runtests` folder. Just run `./runtests all` to compile and run all the tests:
 
-Either way, runtests will perform in the build directory the following actions,
-on the selected tst_Foo.cpp file (or on all test files within the selected
-test folder):
+```shell
+$ cd tests/runtests
+$ ./runtests all
+```
 
-  1. Generate the following test source files:
+Or you can run only the tests in a specific folder:
+
+```shell
+$ ./runtests unit/Core
+```
+
+Or you can run a specific test by its name (i.e., without the `.cpp` extension):
+
+```shell
+$ ./runtests unit/Core/tst_foo
+```
+
+Or finally, you can run it without argument, which will launch a Gui application to select graphically which tests
+to run and see their outputs. 
+
+```shell
+$ ./runtests
+```
+
+When you click on the "run" button, the test is automatically re-compiled if its timestamp is newer than the last compilation. Therefore, you can leave the `runtests` Gui application open while writing tests. Just modify+save your unit test in Qt Creator (or whatever editor), then click the run button in runtests. As simple as that.
+
+
+# What black magic happens under the hood?
+
+For each tst_Foo.cpp file to run, runtests performs the following actions in the build directory:
+
+  1. Generates the following test source files:
       - tst_Foo.gen.h    (defines a QObject with all test functions as private slots)
       - tst_Foo.gen.cpp  (defines a main() function calling qExec on the QObject)
       - tst_Foo.gen.pro  (defines a Qt test project linking to the appropriate libs)
 
-  2. Call qmake/make on tst_Foo.gen.pro, which will generate the binary:
+  2. Calls qmake/make on tst_Foo.gen.pro, which generates the binary:
       - tst_Foo     (on Unix)
       - tst_Foo.exe (on Windows)
 
-  3. Execute the binary test program, and report whether the tests passed or failed
+  3. Executes the binary test program, and report whether the tests passed or failed
 
+During step 1., runtests parses the test file for "#include" preprocessor directives, and uses this information to automagically find which libraries this test depends on, and then adds the appropriate compiler flags to use these libraries.
+
+Also, note that runtests "remembers" the qmake configuration that was used to compile it. At runtime, it uses the same configuration to compile test files. This ensures that the tests are compiled with the same build configuration as the tested libraries.
 
 # How to run memory analyzers on tests?
 
 On Linux, compile in Debug mode, then manually call valgrind on the tst_Foo
-test program you want to analyze. In the future, it would be nice to be  able
-do integrate this feature directly in the runtests tool, but it is not a
+test program you want to analyze. In the future, it would be nice to 
+integrate this feature directly in the runtests tool, but it is not a
 priority for now.
