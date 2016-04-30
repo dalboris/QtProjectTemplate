@@ -16,6 +16,8 @@ private slots:
     void run_();
     void onRunFinished_();
     void onReadyReadCommandLineOutput_();
+    void onReadyReadRunOutput_();
+    void onReadyReadCompileOutput_();
 
 private:
     TestItem * testItem_;

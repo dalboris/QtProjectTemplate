@@ -61,6 +61,8 @@ QString FileTestItem::runOutput() const
 
 void FileTestItem::run()
 {
+    clearCompileOutput();
+    clearRunOutput();
     clearCommandLineOutput();
     setProgress(0.0);
     setStatus(Status::Running);
@@ -72,6 +74,8 @@ void FileTestItem::run()
 void FileTestItem::onOutputChanged_()
 {
     emit outputChanged(this);
+    emit readyReadCompileOutput(this);
+    emit readyReadRunOutput(this);
 }
 
 void FileTestItem::onStatusChanged_(TestRunner::Status /*status*/)

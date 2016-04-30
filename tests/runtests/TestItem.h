@@ -68,6 +68,8 @@ public:
     virtual QString runOutput() const=0;
 
     // Command line output
+    QString readCompileOutput();
+    QString readRunOutput();
     QString readCommandLineOutput();
 
 public slots:
@@ -85,6 +87,9 @@ signals:
     void runFinished(TestItem * item);
     void statusTextChanged(TestItem * item);
     void outputChanged(TestItem * item);
+
+    void readyReadCompileOutput(TestItem * item);
+    void readyReadRunOutput(TestItem * item);
     void readyReadCommandLineOutput(TestItem * item);
 
 protected:
@@ -98,6 +103,8 @@ protected:
     void setProgress(double progress);
 
     // Command line output
+    void clearCompileOutput();
+    void clearRunOutput();
     void clearCommandLineOutput();
     void appendToCommandLineOutput(const QString & s);
 
@@ -112,6 +119,8 @@ private:
     double progress_;
 
     // Command line output
+    int compileOutputReadPos_;
+    int runOutputReadPos_;
     QString commandLineOutputBuffer_;
 };
 

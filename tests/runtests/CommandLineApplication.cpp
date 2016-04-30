@@ -55,6 +55,10 @@ CommandLineApplication::CommandLineApplication(int & argc, char ** argv) :
             out << "Running all tests...\n";
             testPath = "unit"; // for now, there are only unit tests.
         }
+        else if (testPath.endsWith('/'))
+        {
+            testPath = testPath.mid(0, testPath.size()-1);
+        }
 
         QDir testsDir = DirUtils::dir("tests");
 
@@ -64,6 +68,9 @@ CommandLineApplication::CommandLineApplication(int & argc, char ** argv) :
             QDir outDir = DirUtils::outDir("tests/" + testPath);
 
             testItem_ = new DirTestItem(dir, outDir, this);
+
+            connect(testItem_, &TestItem::readyReadCommandLineOutput,
+                    this, &CommandLineApplication::onReadyReadCommandLineOutput_);
 
             out << "Running all tests in " << dir.absolutePath() + "...\n";
         }
@@ -83,12 +90,18 @@ CommandLineApplication::CommandLineApplication(int & argc, char ** argv) :
                 {
                     testItem_ = new FileTestItem(dir, outDir, testFileName, this);
 
+                    connect(testItem_, &TestItem::readyReadCompileOutput,
+                            this, &CommandLineApplication::onReadyReadCompileOutput_);
+
+                    connect(testItem_, &TestItem::readyReadRunOutput,
+                            this, &CommandLineApplication::onReadyReadRunOutput_);
+
                     out << "Running test " << dir.absoluteFilePath(testFileName) + "...\n";
                 }
                 else
                 {
                     out << "Error: couldn't find " << testFileName
-                        << "in " << dir.absolutePath() + "/\n";
+                        << " in " << dir.absolutePath() + "/\n";
                 }
             }
             else
@@ -107,9 +120,6 @@ void CommandLineApplication::run_()
 {
     if (testItem_)
     {
-        connect(testItem_, &TestItem::readyReadCommandLineOutput,
-                this, &CommandLineApplication::onReadyReadCommandLineOutput_);
-
         connect(testItem_, &TestItem::runFinished,
                 this, &CommandLineApplication::onRunFinished_);
 
@@ -125,6 +135,18 @@ void CommandLineApplication::onReadyReadCommandLineOutput_()
 {
     QTextStream out(stdout);
     out << testItem_->readCommandLineOutput();
+}
+
+void CommandLineApplication::onReadyReadRunOutput_()
+{
+    QTextStream out(stdout);
+    out << testItem_->readRunOutput();
+}
+
+void CommandLineApplication::onReadyReadCompileOutput_()
+{
+    QTextStream out(stdout);
+    out << testItem_->readCompileOutput();
 }
 
 void CommandLineApplication::onRunFinished_()

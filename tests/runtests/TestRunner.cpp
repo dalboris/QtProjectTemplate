@@ -271,6 +271,8 @@ void TestRunner::failCompilation_(const QString & errorMessage)
 {
     QString time = getCurrentTime();
     compileOutput_ += time + ": Compilation failed: " + errorMessage + "\n";
+
+    emit outputChanged();
     setStatus_(Status::CompileError);
     emit compileFinished(false);
 }
@@ -391,6 +393,9 @@ void TestRunner::compile()
                 static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
                 this,
                 &TestRunner::compile_onQmakeFinished_);
+
+        emit outputChanged();
+
         process_->start(program, arguments);
 
         // -> go read qMakeFinished_(int exitCode) now.
@@ -432,6 +437,9 @@ void TestRunner::compile_onQmakeFinished_(int exitCode, QProcess::ExitStatus /*e
                 static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
                 this,
                 &TestRunner::compile_onMakeFinished_);
+
+        emit outputChanged();
+
         process_->start(program, arguments);
 
         // -> go read makeFinished_(int exitCode) now.
@@ -461,6 +469,8 @@ void TestRunner::compile_onMakeFinished_(int exitCode, QProcess::ExitStatus /*ex
         compileOutput_ += time + ": The process \"" + process_->program() + "\" exited normally.\n";
 
         testBinPath_ = compileDir_.absoluteFilePath(testName_); // XXX TODO change this on Windows
+
+        emit outputChanged();
         setStatus_(Status::NotRunYet);
         emit compileFinished(true);
     }
@@ -470,6 +480,7 @@ void TestRunner::compile_onMakeFinished_(int exitCode, QProcess::ExitStatus /*ex
         compileOutput_ +=
                 time + ": The process \"" + process_->program() +
                 QString("\" exited with code %1.\n").arg(exitCode);
+
         failCompilation_("make failed.");
     }
 }
@@ -504,6 +515,9 @@ void TestRunner::run_onCompileFinished_(bool success)
                 static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
                 this,
                 &TestRunner::run_onTestFinished_);
+
+        emit outputChanged();
+
         process_->start(program, arguments);
     }
     else
@@ -528,6 +542,7 @@ void TestRunner::run_onTestFinished_(int exitCode, QProcess::ExitStatus /*exitSt
         QString time = getCurrentTime();
         runOutput_ += time + ": The process \"" + process_->program() + "\" exited normally.\n";
 
+        emit outputChanged();
         setStatus_(Status::Pass);
         emit runFinished(true);
     }
@@ -538,6 +553,7 @@ void TestRunner::run_onTestFinished_(int exitCode, QProcess::ExitStatus /*exitSt
                 time + ": The process \"" + process_->program() +
                 QString("\" exited with code %1.\n").arg(exitCode);
 
+        emit outputChanged();
         setStatus_(Status::RunError);
         emit runFinished(false);
     }

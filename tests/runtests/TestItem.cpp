@@ -10,7 +10,11 @@ TestItem::TestItem(QObject * parent) :
     row_(0),
 
     status_(Status::None),
-    progress_(0.0)
+    progress_(0.0),
+
+    compileOutputReadPos_(0),
+    runOutputReadPos_(0),
+    commandLineOutputBuffer_()
 {
 }
 
@@ -68,6 +72,16 @@ void TestItem::setProgress(double progress)
     emit progressChanged(this);
 }
 
+void TestItem::clearCompileOutput()
+{
+    compileOutputReadPos_ = 0;
+}
+
+void TestItem::clearRunOutput()
+{
+    runOutputReadPos_ = 0;
+}
+
 void TestItem::clearCommandLineOutput()
 {
     commandLineOutputBuffer_.clear();
@@ -84,4 +98,20 @@ QString TestItem::readCommandLineOutput()
     QString res = commandLineOutputBuffer_;
     commandLineOutputBuffer_.clear();
     return res;
+}
+
+QString TestItem::readCompileOutput()
+{
+    QString fullOutput = compileOutput();
+    QString unreadOutput = fullOutput.mid(compileOutputReadPos_);
+    compileOutputReadPos_ = fullOutput.size();
+    return unreadOutput;
+}
+
+QString TestItem::readRunOutput()
+{
+    QString fullOutput = runOutput();
+    QString unreadOutput = fullOutput.mid(runOutputReadPos_);
+    runOutputReadPos_ = fullOutput.size();
+    return unreadOutput;
 }
