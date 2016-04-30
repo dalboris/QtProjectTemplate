@@ -11,15 +11,9 @@
 
 MainWindow::MainWindow()
 {
-    // Get root/tests/unit directory
-    QDir unitDir = DirUtils::rootDir();
-    DirUtils::cd(unitDir, "tests");
-    DirUtils::cd(unitDir, "unit");
-
-    // Get root/tests/unit out directory
-    QDir unitOutDir = DirUtils::rootOutDir();
-    DirUtils::cd(unitOutDir, "tests");
-    DirUtils::cd(unitOutDir, "unit");
+    // Get tests/unit directory and out directory
+    QDir unitDir    = DirUtils::dir   ("tests/unit");
+    QDir unitOutDir = DirUtils::outDir("tests/unit");
 
     // Test tree model
     testTreeModel_ = new TestTreeModel(unitDir, unitOutDir, this);
@@ -34,12 +28,8 @@ MainWindow::MainWindow()
 
     // Output widgets
     relevantOutputWidget_ = new OutputWidget();
-    compileOutputWidget_ = new OutputWidget();
-    runOutputWidget_ = new OutputWidget();
-    QTabWidget * outputWidgets = new QTabWidget();
-    outputWidgets->addTab(relevantOutputWidget_, "Relevant Output");
-    outputWidgets->addTab(compileOutputWidget_, "Compile Output");
-    outputWidgets->addTab(runOutputWidget_, "Run Output");
+    compileOutputWidget_  = new OutputWidget();
+    runOutputWidget_      = new OutputWidget();
 
     // Update output when current item changes
     connect(testTreeSelectionModel_, &TestTreeSelectionModel::currentTestItemChanged,
@@ -48,7 +38,13 @@ MainWindow::MainWindow()
     // Initialize current item
     testTreeView_->setCurrentIndex(testTreeModel_->index(0, 0));
 
-    // Layout
+    // Output widget layout
+    QTabWidget * outputWidgets = new QTabWidget();
+    outputWidgets->addTab(relevantOutputWidget_, "Relevant Output");
+    outputWidgets->addTab(compileOutputWidget_,  "Compile Output");
+    outputWidgets->addTab(runOutputWidget_,      "Run Output");
+
+    // Main layout
     QSplitter * splitter = new QSplitter();
     splitter->addWidget(testTreeView_);
     splitter->addWidget(outputWidgets);
@@ -57,7 +53,7 @@ MainWindow::MainWindow()
     setCentralWidget(splitter);
 
     // Set sensible sizes and proportions
-    resize(1200, 650);
+    resize(1400, 700);
     splitter->setStretchFactor(0,1);
     splitter->setStretchFactor(1,2);
 }

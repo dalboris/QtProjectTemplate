@@ -30,6 +30,7 @@ private slots:
     void onChildProgressChanged_(TestItem * item);
     void onChildRunStarted_(TestItem * item);
     void onChildRunFinished_(TestItem * item);
+    void onChildReadyReadCommandLineOutput_(TestItem * item);
 
 private:
     void updateStatus_();

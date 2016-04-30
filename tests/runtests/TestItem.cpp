@@ -67,3 +67,21 @@ void TestItem::setProgress(double progress)
     progress_ = progress;
     emit progressChanged(this);
 }
+
+void TestItem::clearCommandLineOutput()
+{
+    commandLineOutputBuffer_.clear();
+}
+
+void TestItem::appendToCommandLineOutput(const QString & s)
+{
+    commandLineOutputBuffer_.append(s);
+    emit readyReadCommandLineOutput(this);
+}
+
+QString TestItem::readCommandLineOutput()
+{
+    QString res = commandLineOutputBuffer_;
+    commandLineOutputBuffer_.clear();
+    return res;
+}

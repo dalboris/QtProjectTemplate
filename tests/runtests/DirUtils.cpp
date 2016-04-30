@@ -2,13 +2,13 @@
 
 #include <QMessageBox>
 
-bool DirUtils::cd(QDir & dir, QString relPath)
+bool DirUtils::cd(QDir & dir, const QString & dirPath)
 {
-    QStringList names = relPath.split('/');
+    DirUtils::mkdir(dir, dirPath);
+
+    QStringList names = dirPath.split('/');
     foreach (QString name, names)
     {
-        DirUtils::mkdir(dir, name);
-
         if (!dir.cd(name))
         {
             QMessageBox::critical(
@@ -21,27 +21,57 @@ bool DirUtils::cd(QDir & dir, QString relPath)
     return true;
 }
 
-bool DirUtils::mkdir(QDir & dir, QString name)
+bool DirUtils::mkdir(const QDir & dir_, const QString & dirPath)
 {
-    if (dir.exists(name))
+    QStringList names = dirPath.split('/');
+    QDir dir = dir_;
+    foreach (QString name, names)
     {
-        return true;
-    }
-    else
-    {
-        if (dir.mkdir(name))
+        // Create directory if it does not exist yet
+        if (!dir.exists(name))
         {
-            return true;
+            if (!dir.mkdir(name))
+            {
+                QMessageBox::critical(
+                        0, "Error creating directory",
+                        QString("Failed to create directory %1")
+                            .arg(dir.absoluteFilePath(name)));
+                return false;
+            }
         }
-        else
+
+        // Move to directory
+        if (!dir.cd(name))
         {
             QMessageBox::critical(
-                    0, "Error creating directory",
-                    QString("Failed to create directory %1")
+                        0, "Error moving to directory",
+                        QString("Failed to move to directory %1")
                         .arg(dir.absoluteFilePath(name)));
             return false;
         }
     }
+    return true;
+}
+
+bool DirUtils::isDir(const QDir & dir_, const QString & dirPath)
+{
+    QStringList names = dirPath.split('/');
+    QDir dir = dir_;
+    foreach (QString name, names)
+    {
+        // Check if the directory exists
+        if (!dir.exists(name))
+        {
+            return false;
+        }
+
+        // Check that it can be traversed
+        if (!dir.cd(name))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 QDir DirUtils::rootDir()

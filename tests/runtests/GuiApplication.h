@@ -8,7 +8,7 @@ class MainWindow;
 class GuiApplication: public QApplication
 {
 public:
-    GuiApplication(int argc, char * argv[]);
+    GuiApplication(int & argc, char ** argv);
     ~GuiApplication();
 
 private:

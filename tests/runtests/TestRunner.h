@@ -55,6 +55,10 @@ public:
     ///
     QString testName() const;
 
+    /// Returns the relPath of the test.
+    ///
+    QString testRelPath() const;
+
     /// Returns the status of the TestRunner.
     ///
     Status status() const;

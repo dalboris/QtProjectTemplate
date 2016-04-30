@@ -61,6 +61,7 @@ QString FileTestItem::runOutput() const
 
 void FileTestItem::run()
 {
+    clearCommandLineOutput();
     setProgress(0.0);
     setStatus(Status::Running);
     emit runStarted(this);
@@ -82,5 +83,29 @@ void FileTestItem::onRunFinished_(bool success)
 {
     setProgress(1.0);
     setStatus(success ? Status::Pass : Status::Fail);
+
+    QString testRelPath = testRunner_->testRelPath();
+
+    switch (testRunner_->status())
+    {
+    case TestRunner::Status::CompileError:
+        appendToCommandLineOutput(compileOutput());
+        appendToCommandLineOutput("FAIL: " + testRelPath + "\n");
+        break;
+
+    case TestRunner::Status::RunError:
+        appendToCommandLineOutput(runOutput());
+        appendToCommandLineOutput("FAIL: " + testRelPath + "\n");
+        break;
+
+    case TestRunner::Status::Pass:
+        appendToCommandLineOutput("PASS: " + testRelPath + "\n");
+        break;
+
+    default:
+        appendToCommandLineOutput("????: " + testRelPath + "\n");
+        break;
+    }
+
     emit runFinished(this);
 }

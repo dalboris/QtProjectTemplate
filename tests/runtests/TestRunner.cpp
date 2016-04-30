@@ -527,7 +527,6 @@ void TestRunner::run_onTestFinished_(int exitCode, QProcess::ExitStatus /*exitSt
     {
         QString time = getCurrentTime();
         runOutput_ += time + ": The process \"" + process_->program() + "\" exited normally.\n";
-        runOutput_ += time + ": Test passed :-)\n";
 
         setStatus_(Status::Pass);
         emit runFinished(true);
@@ -538,7 +537,6 @@ void TestRunner::run_onTestFinished_(int exitCode, QProcess::ExitStatus /*exitSt
         runOutput_ +=
                 time + ": The process \"" + process_->program() +
                 QString("\" exited with code %1.\n").arg(exitCode);
-        runOutput_ += time + ": Test failed :-(\n";
 
         setStatus_(Status::RunError);
         emit runFinished(false);
@@ -570,4 +568,11 @@ void TestRunner::onReadyReadStandardOutput_()
     }
 
     emit outputChanged();
+}
+
+QString TestRunner::testRelPath() const
+{
+    QString testAbsoluteName = inDir_.absoluteFilePath(testName());
+    QDir testsDir = DirUtils::dir("tests");
+    return testsDir.relativeFilePath(testAbsoluteName);
 }

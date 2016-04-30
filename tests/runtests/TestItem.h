@@ -67,6 +67,9 @@ public:
     virtual QString compileOutput() const=0;
     virtual QString runOutput() const=0;
 
+    // Command line output
+    QString readCommandLineOutput();
+
 public slots:
     // Run test
     virtual void run()=0;
@@ -82,6 +85,7 @@ signals:
     void runFinished(TestItem * item);
     void statusTextChanged(TestItem * item);
     void outputChanged(TestItem * item);
+    void readyReadCommandLineOutput(TestItem * item);
 
 protected:
     // Append a child item to this item.
@@ -93,6 +97,10 @@ protected:
     // Changes progress to \p progress, and emits progressChanged()
     void setProgress(double progress);
 
+    // Command line output
+    void clearCommandLineOutput();
+    void appendToCommandLineOutput(const QString & s);
+
 private:
     // Parent-child hierarchy
     TestItem * parentItem_;
@@ -102,6 +110,9 @@ private:
     // Status data
     Status status_;
     double progress_;
+
+    // Command line output
+    QString commandLineOutputBuffer_;
 };
 
 #endif // TESTSTREEITEM_H

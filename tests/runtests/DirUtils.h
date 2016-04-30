@@ -10,15 +10,36 @@
 class DirUtils
 {
 public:
-    /// Performs a cd operation on the dir. Reports if couldn't.
-    /// Returns false if couldn't.
+    /// Performs cd operations on the dir to get to \p dirPath. Silently
+    /// performs an mkdir operation for each directory in \p dirPath that does
+    /// not already exists. The given \p dirPath is relative to \p dir.
     ///
-    static bool cd(QDir & dir, QString relPath);
+    /// Returns true if dir was successfully moved to \p dirPath.
+    ///
+    /// Returns false and logs an error if a directory in \p dirPath did not
+    /// exist and mkdir failed; or if a directory in \p dirPath existed (or was
+    /// successfully created) but traversing it failed (e.g., due to
+    /// permissions).
+    ///
+    static bool cd(QDir & dir, const QString & dirPath);
 
-    /// Performs a mkdir operation on the dir. Reports if couldn't.
-    /// Returns false if couldn't.
+    /// Performs an mkdir operation for each directory in \p dirPath that does
+    /// not already exists. The given \p dirPath is relative to \p dir.
     ///
-    static bool mkdir(QDir & dir, QString name);
+    /// Returns true if each directory in \p dirPath was successfully created
+    /// or already existed.
+    ///
+    /// Returns false and logs an error if a directory in \p dirPath did not
+    /// exist and mkdir failed; or if a directory in \p dirPath existed (or was
+    /// successfully created) but traversing it failed (for instance, due to
+    /// permissions).
+    ///
+    static bool mkdir(const QDir & dir, const QString & dirPath);
+
+    /// Returns true if the given \p dirPath exists, is a directory, and
+    /// can be traversed.
+    ///
+    static bool isDir(const QDir & dir, const QString & dirPath);
 
     /// Returns the distribution's root directory. Example:
     ///     /home/boris/Documents/QtProjectTemplate

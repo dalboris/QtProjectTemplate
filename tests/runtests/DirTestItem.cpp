@@ -66,6 +66,9 @@ DirTestItem::DirTestItem(
         connect(child, &TestItem::progressChanged, this, &DirTestItem::onChildProgressChanged_);
         connect(child, &TestItem::runStarted,      this, &DirTestItem::onChildRunStarted_);
         connect(child, &TestItem::runFinished,     this, &DirTestItem::onChildRunFinished_);
+
+        connect(child, &TestItem::readyReadCommandLineOutput,
+                this, &DirTestItem::onChildReadyReadCommandLineOutput_);
     }
 }
 
@@ -148,11 +151,30 @@ void DirTestItem::runNextChildItemInQueue_()
 {
     updateStatus_();
 
-    if (childItemsRunQueue_.isEmpty())
+    if (childItemsRunQueue_.isEmpty()) // Finished!
     {
+        QString testAbsolutePath = dir_.absolutePath();
+        QDir testsDir = DirUtils::dir("tests");
+        QString testRelPath = testsDir.relativeFilePath(testAbsolutePath);
+
+        switch (status())
+        {
+        case TestItem::Status::Fail:
+            appendToCommandLineOutput("FAIL: " + testRelPath + "\n");
+            break;
+
+        case TestItem::Status::Pass:
+            appendToCommandLineOutput("PASS: " + testRelPath + "\n");
+            break;
+
+        default:
+            appendToCommandLineOutput("????: " + testRelPath + "\n");
+            break;
+        }
+
         emit runFinished(this);
     }
-    else
+    else // Still some children to run
     {
         TestItem * child = childItemsRunQueue_.front();
         childItemsRunQueue_.pop_front();
@@ -268,4 +290,9 @@ void DirTestItem::onChildRunFinished_(TestItem * item)
         childItemRanByThis_ = nullptr;
         runNextChildItemInQueue_();
     }
+}
+
+void DirTestItem::onChildReadyReadCommandLineOutput_(TestItem * item)
+{
+    appendToCommandLineOutput(item->readCommandLineOutput());
 }
